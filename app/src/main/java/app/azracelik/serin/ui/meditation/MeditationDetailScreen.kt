@@ -3,8 +3,12 @@ package app.azracelik.serin.ui.meditation
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -12,7 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,7 +42,10 @@ import app.azracelik.serin.data.bundledImage
 import app.azracelik.serin.ui.components.CardShape
 import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.components.SerinHeader
-import app.azracelik.serin.ui.components.bottomBarHeight
+import app.azracelik.serin.playback.MeditationSession
+import app.azracelik.serin.playback.SessionState
+import app.azracelik.serin.ui.components.contentBottomPadding
+import app.azracelik.serin.ui.components.formatDuration
 import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.components.serinTextShadow
 import app.azracelik.serin.ui.theme.SerinPurple
@@ -47,7 +56,8 @@ import app.azracelik.serin.ui.theme.SerinType
 fun MeditationDetailScreen(
     meditation: Meditation,
     isPlaying: Boolean,
-    progress: Float,
+    session: SessionState,
+    onLengthSelect: (Int) -> Unit,
     onPlayClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -58,7 +68,7 @@ fun MeditationDetailScreen(
             .fillMaxSize()
             .background(Color.White)
             .verticalScroll(rememberScrollState())
-            .padding(bottom = bottomBarHeight()),
+            .padding(bottom = contentBottomPadding()),
     ) {
         SerinHeader()
         Spacer(Modifier.height(50.dp))
@@ -80,8 +90,10 @@ fun MeditationDetailScreen(
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 24.dp),
         )
-        Spacer(Modifier.height(70.dp))
-        ProgressLine(progress)
+        Spacer(Modifier.height(32.dp))
+        SessionLengthPicker(selected = session.lengthMinutes, onSelect = onLengthSelect)
+        Spacer(Modifier.height(14.dp))
+        ProgressLine(session.progress, session.remainingMs)
         Spacer(Modifier.height(8.dp))
         Image(
             painter = painterResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play),
@@ -95,19 +107,49 @@ fun MeditationDetailScreen(
     }
 }
 
-/** Figma'daki çizgi; çalınan kısım mor ile doluyor. */
+/** Seans süresi seçimi: 5 / 10 / 20 dk. */
 @Composable
-private fun ProgressLine(progress: Float) {
-    Canvas(
-        Modifier
+private fun SessionLengthPicker(selected: Int, onSelect: (Int) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        MeditationSession.LengthsMinutes.forEach { minutes ->
+            val isSelected = minutes == selected
+            Text(
+                text = stringResource(R.string.session_minutes, minutes),
+                style = SerinType.SessionChip.copy(color = if (isSelected) Color.White else SerinPurple),
+                modifier = Modifier
+                    .clip(ChipShape)
+                    .background(if (isSelected) SerinPurple else Color.Transparent)
+                    .border(1.5.dp, SerinPurple, ChipShape)
+                    .selectable(selected = isSelected, role = Role.RadioButton, onClick = { onSelect(minutes) })
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+            )
+        }
+    }
+}
+
+private val ChipShape = RoundedCornerShape(50)
+
+/** Figma'daki çizgi; seansın geçen kısmı mor ile dolar, altında kalan süre yazar. */
+@Composable
+private fun ProgressLine(progress: Float, remainingMs: Long) {
+    Box(
+        contentAlignment = Alignment.BottomCenter,
+        modifier = Modifier
             .width(236.dp)
             .height(75.dp),
     ) {
-        val y = size.height / 2
-        drawLine(Color.Black, Offset(0f, y), Offset(size.width, y), 2.dp.toPx(), StrokeCap.Round)
-        if (progress > 0f) {
-            drawLine(SerinPurple, Offset(0f, y), Offset(size.width * progress, y), 4.dp.toPx(), StrokeCap.Round)
+        Canvas(Modifier.fillMaxSize()) {
+            val y = size.height / 2
+            drawLine(Color.Black, Offset(0f, y), Offset(size.width, y), 2.dp.toPx(), StrokeCap.Round)
+            if (progress > 0f) {
+                drawLine(SerinPurple, Offset(0f, y), Offset(size.width * progress, y), 4.dp.toPx(), StrokeCap.Round)
+            }
         }
+        Text(
+            text = formatDuration(remainingMs),
+            style = SerinType.SessionTime,
+            modifier = Modifier.padding(bottom = 6.dp),
+        )
     }
 }
 
@@ -115,6 +157,12 @@ private fun ProgressLine(progress: Float) {
 @Composable
 private fun MeditationDetailScreenPreview() {
     SerinTheme {
-        MeditationDetailScreen(PreviewContent.meditations[3], isPlaying = true, progress = 0.4f, onPlayClick = {})
+        MeditationDetailScreen(
+            meditation = PreviewContent.meditations[3],
+            isPlaying = true,
+            session = SessionState(lengthMs = 600_000, elapsedMs = 240_000),
+            onLengthSelect = {},
+            onPlayClick = {},
+        )
     }
 }

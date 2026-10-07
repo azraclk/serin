@@ -29,7 +29,7 @@ import app.azracelik.serin.ui.components.CardBorderWidth
 import app.azracelik.serin.ui.components.CardShape
 import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.components.SerinHeader
-import app.azracelik.serin.ui.components.bottomBarHeight
+import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.components.serinTextShadow
 import app.azracelik.serin.ui.theme.SerinPurple
@@ -46,7 +46,7 @@ fun BlogScreen(
         SerinHeader(Modifier.padding(bottom = 15.dp))
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(42.dp),
-            contentPadding = PaddingValues(start = 12.5.dp, end = 12.5.dp, bottom = bottomBarHeight()),
+            contentPadding = PaddingValues(start = 12.5.dp, end = 12.5.dp, bottom = contentBottomPadding()),
         ) {
             items(posts, key = { it.id }) { post ->
                 BlogCard(post, onClick = { onPostClick(post) })

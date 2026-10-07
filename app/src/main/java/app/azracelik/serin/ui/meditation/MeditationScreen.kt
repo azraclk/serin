@@ -28,7 +28,7 @@ import app.azracelik.serin.ui.components.CardBorderWidth
 import app.azracelik.serin.ui.components.CardShape
 import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.components.SerinHeader
-import app.azracelik.serin.ui.components.bottomBarHeight
+import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.components.serinTextShadow
 import app.azracelik.serin.ui.theme.SerinPurple
@@ -48,7 +48,7 @@ fun MeditationScreen(
             columns = GridCells.Fixed(2),
             horizontalArrangement = Arrangement.spacedBy(21.dp),
             verticalArrangement = Arrangement.spacedBy(19.dp),
-            contentPadding = PaddingValues(start = 11.dp, end = 11.dp, bottom = bottomBarHeight()),
+            contentPadding = PaddingValues(start = 11.dp, end = 11.dp, bottom = contentBottomPadding()),
         ) {
             items(meditations, key = { it.id }) { meditation ->
                 MeditationCard(meditation, onClick = { onMeditationClick(meditation) })

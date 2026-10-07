@@ -2,7 +2,9 @@ package app.azracelik.serin.playback
 
 import android.app.Application
 import android.content.ComponentName
+import android.content.Context
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,36 +14,39 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import app.azracelik.serin.data.Meditation
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+
+private const val PrefsName = "player"
+private const val LengthKey = "session_length_minutes"
 
 data class PlaybackState(
-    /** Çalan ya da duraklatılmış meditasyonun id'si. */
+    /** Seansı süren (çalan ya da duraklatılmış) meditasyonun id'si. */
     val mediaId: String? = null,
     val isPlaying: Boolean = false,
-    val positionMs: Long = 0,
-    val durationMs: Long = 0,
-) {
-    val progress: Float
-        get() = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
-}
+    val session: SessionState = MeditationSession.state.value,
+)
 
 /** Ekranlarla [PlaybackService] arasındaki köprü. */
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
+    private val prefs = application.getSharedPreferences(PrefsName, Context.MODE_PRIVATE)
     private val controllerFuture = MediaController.Builder(
         application,
         SessionToken(application, ComponentName(application, PlaybackService::class.java)),
     ).buildAsync()
     private var controller: MediaController? = null
 
-    private val _state = MutableStateFlow(PlaybackState())
-    val state: StateFlow<PlaybackState> = _state.asStateFlow()
+    private val player = MutableStateFlow(PlaybackState())
+
+    val state: StateFlow<PlaybackState> = combine(player, MeditationSession.state) { player, session ->
+        player.copy(session = session)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, PlaybackState())
 
     init {
+        MeditationSession.setLength(prefs.getInt(LengthKey, MeditationSession.DefaultLengthMinutes))
         controllerFuture.addListener(
             {
                 controller = controllerFuture.get().also { controller ->
@@ -53,13 +58,11 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             },
             ContextCompat.getMainExecutor(application),
         )
-        // İlerleme çubuğu için çalarken konumu düzenli olarak güncelle.
-        viewModelScope.launch {
-            while (isActive) {
-                if (controller?.isPlaying == true) updateState()
-                delay(500)
-            }
-        }
+    }
+
+    fun setSessionLength(minutes: Int) {
+        MeditationSession.setLength(minutes)
+        prefs.edit { putInt(LengthKey, minutes) }
     }
 
     /** Bu meditasyon çalıyorsa duraklatır, değilse çalmaya başlar. */
@@ -67,14 +70,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         val controller = controller ?: return
         val audio = meditation.audio ?: return
         if (controller.currentMediaItem?.mediaId == meditation.id) {
-            when {
-                controller.isPlaying -> controller.pause()
-                controller.playbackState == Player.STATE_ENDED -> {
-                    controller.seekTo(0)
-                    controller.play()
-                }
-                else -> controller.play()
-            }
+            if (controller.isPlaying) controller.pause() else controller.play()
             return
         }
         val item = MediaItem.Builder()
@@ -93,13 +89,24 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         controller.play()
     }
 
+    /** Çalan seansın oynat/duraklat düğmesi (mini player). */
+    fun toggleCurrent() {
+        val controller = controller ?: return
+        if (controller.isPlaying) controller.pause() else controller.play()
+    }
+
+    /** Seansı bitirir; mini player kaybolur. */
+    fun stop() {
+        val controller = controller ?: return
+        controller.stop()
+        controller.clearMediaItems()
+    }
+
     private fun updateState() {
         val controller = controller ?: return
-        _state.value = PlaybackState(
+        player.value = PlaybackState(
             mediaId = controller.currentMediaItem?.mediaId,
             isPlaying = controller.isPlaying,
-            positionMs = controller.currentPosition,
-            durationMs = controller.duration.coerceAtLeast(0),
         )
     }
 

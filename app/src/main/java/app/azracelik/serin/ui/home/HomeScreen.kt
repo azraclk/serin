@@ -45,7 +45,7 @@ import app.azracelik.serin.ui.components.CardBorderWidth
 import app.azracelik.serin.ui.components.CardShape
 import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.components.SerinHeader
-import app.azracelik.serin.ui.components.bottomBarHeight
+import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.theme.Merriweather
 import app.azracelik.serin.ui.theme.SerinPurple
@@ -66,7 +66,7 @@ fun HomeScreen(
             .fillMaxSize()
             .background(Color.White)
             .verticalScroll(rememberScrollState())
-            .padding(bottom = bottomBarHeight()),
+            .padding(bottom = contentBottomPadding()),
     ) {
         Hero()
         Spacer(Modifier.height(104.dp))

@@ -32,7 +32,7 @@ import app.azracelik.serin.data.bundledImage
 import app.azracelik.serin.ui.components.CardShape
 import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.components.SerinHeader
-import app.azracelik.serin.ui.components.bottomBarHeight
+import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.markdown.Markdown
 import app.azracelik.serin.ui.markdown.MdBlock
@@ -70,7 +70,7 @@ private fun PostContent(post: BlogPost, body: PostBodyState, onRetry: () -> Unit
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(bottom = bottomBarHeight() + 32.dp),
+            .padding(bottom = contentBottomPadding() + 32.dp),
     ) {
         // Blog listesindeki kartla aynı ölçüler; burada görsel soluk değil.
         RemoteImage(

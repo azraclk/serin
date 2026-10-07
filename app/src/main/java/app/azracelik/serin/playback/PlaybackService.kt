@@ -15,6 +15,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
 import java.io.File
 
 private const val AudioCacheBytes = 300L * 1024 * 1024
@@ -26,6 +28,8 @@ private const val AudioCacheBytes = 300L * 1024 * 1024
 @OptIn(UnstableApi::class)
 class PlaybackService : MediaSessionService() {
     private var mediaSession: MediaSession? = null
+    private val scope = MainScope()
+    private var sessionTimer: SessionTimer? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -44,6 +48,7 @@ class PlaybackService : MediaSessionService() {
             // Kulaklık çıkarılınca duraklat.
             .setHandleAudioBecomingNoisy(true)
             .build()
+        sessionTimer = SessionTimer(player, scope).also { it.start() }
         mediaSession = MediaSession.Builder(this, player).build()
     }
 
@@ -58,6 +63,8 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        sessionTimer?.release()
+        scope.cancel()
         mediaSession?.run {
             player.release()
             release()

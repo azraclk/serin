@@ -17,6 +17,8 @@
 
     <string name="play">Play</string>
     <string name="pause">Pause</string>
+    <string name="session_minutes">%d min</string>
+    <string name="close">Close</string>
 
     <!-- Blog yazısı -->
     <string name="post_failed">Couldn\'t load this post. Check your connection and try again.</string>

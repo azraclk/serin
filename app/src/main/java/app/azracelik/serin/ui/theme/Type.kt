@@ -45,6 +45,11 @@ object SerinType {
         color = SerinPurple,
     )
     val PostSubheading = Base.copy(fontSize = 17.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
+
+    // Seans süresi ve mini player.
+    val SessionChip = Base.copy(fontSize = 14.sp, letterSpacing = 0.5.sp)
+    val SessionTime = Base.copy(fontSize = 12.sp, letterSpacing = 0.6.sp, color = Color.Black.copy(alpha = 0.55f))
+    val MiniTitle = Base.copy(fontSize = 15.sp, lineHeight = 20.sp)
 }
 
 val Typography = Typography().run {
