@@ -5,6 +5,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,9 +21,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import app.azracelik.serin.data.BlogPost
 import app.azracelik.serin.data.Meditation
 import app.azracelik.serin.playback.PlayerViewModel
+import app.azracelik.serin.ui.blog.BlogPostScreen
 import app.azracelik.serin.ui.blog.BlogScreen
+import app.azracelik.serin.ui.blog.PostBodyState
 import app.azracelik.serin.ui.components.SerinBottomBar
 import app.azracelik.serin.ui.components.SerinTab
 import app.azracelik.serin.ui.home.HomeScreen
@@ -33,8 +40,10 @@ private object Routes {
     const val MEDITATION = "meditation"
     const val MEDITATION_DETAIL = "meditation/{id}"
     const val BLOG = "blog"
+    const val BLOG_POST = "blog/{id}"
 
     fun meditationDetail(meditation: Meditation) = "meditation/${meditation.id}"
+    fun blogPost(post: BlogPost) = "blog/${post.id}"
 }
 
 private val SerinTab.route
@@ -56,7 +65,7 @@ fun SerinApp(
     val selectedTab = when (backStackEntry?.destination?.route) {
         Routes.HOME -> SerinTab.Home
         Routes.MEDITATION, Routes.MEDITATION_DETAIL -> SerinTab.Meditation
-        Routes.BLOG -> SerinTab.Blog
+        Routes.BLOG, Routes.BLOG_POST -> SerinTab.Blog
         else -> null
     }
 
@@ -74,7 +83,7 @@ fun SerinApp(
                     bannerUrl = content.home.banner,
                     featuredPosts = content.featuredPosts,
                     onBannerClick = { navController.navigateToTab(SerinTab.Meditation) },
-                    onPostClick = { navController.navigateToTab(SerinTab.Blog) },
+                    onPostClick = { navController.navigate(Routes.blogPost(it)) },
                 )
             }
             composable(Routes.MEDITATION) {
@@ -96,8 +105,25 @@ fun SerinApp(
                 }
             }
             composable(Routes.BLOG) {
-                // Blog yazısı detay ekranı henüz tasarımda yok.
-                BlogScreen(content.blogPosts, onPostClick = {})
+                BlogScreen(content.blogPosts, onPostClick = { navController.navigate(Routes.blogPost(it)) })
+            }
+            composable(
+                Routes.BLOG_POST,
+                arguments = listOf(navArgument("id") { type = NavType.StringType }),
+            ) { entry ->
+                content.blogPost(entry.arguments?.getString("id").orEmpty())?.let { post ->
+                    var attempt by remember { mutableIntStateOf(0) }
+                    val body by produceState<PostBodyState>(PostBodyState.Loading, post.body, attempt) {
+                        val url = post.body
+                        value = if (url == null) {
+                            PostBodyState.ComingSoon
+                        } else {
+                            value = PostBodyState.Loading
+                            contentViewModel.loadPost(url)?.let(PostBodyState::Loaded) ?: PostBodyState.Failed
+                        }
+                    }
+                    BlogPostScreen(post, body, onRetry = { attempt++ })
+                }
             }
         }
 

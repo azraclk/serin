@@ -17,4 +17,9 @@
 
     <string name="play">Play</string>
     <string name="pause">Pause</string>
+
+    <!-- Blog yazısı -->
+    <string name="post_failed">Couldn\'t load this post. Check your connection and try again.</string>
+    <string name="try_again">Try again</string>
+    <string name="post_coming_soon">This post is coming soon.</string>
 </resources>

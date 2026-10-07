@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import okhttp3.CacheControl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -34,20 +35,37 @@ class ContentRepository(context: Context, private val client: OkHttpClient) {
     val content: StateFlow<SerinContent> = _content.asStateFlow()
 
     suspend fun refresh() = withContext(Dispatchers.IO) {
+        val text = fetch(ContentBaseUrl + ContentFileName) ?: return@withContext
         try {
-            val request = Request.Builder().url(ContentBaseUrl + ContentFileName).build()
-            val text = client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw IOException("HTTP ${response.code}")
-                response.body.string()
-            }
             // Bozuk bir JSON burada hata fırlatır ve önceki içerik ekranda kalır.
             _content.value = parseContent(text)
             cacheFile.writeText(text)
-        } catch (e: IOException) {
-            Log.w(Tag, "İçerik indirilemedi", e)
         } catch (e: IllegalArgumentException) {
             Log.w(Tag, "content.json okunamadı", e)
         }
+    }
+
+    /** Blog yazısı gibi bir metin dosyasını indirir; internet yoksa daha önce indirilmiş hâlini döner. */
+    suspend fun loadText(url: String): String? = withContext(Dispatchers.IO) {
+        fetch(url) ?: fetch(url, CacheControl.FORCE_CACHE)
+    }
+
+    private fun fetch(url: String, cacheControl: CacheControl? = null): String? = try {
+        val request = Request.Builder()
+            .url(url)
+            .apply { if (cacheControl != null) cacheControl(cacheControl) }
+            .build()
+        client.newCall(request).execute().use { response ->
+            if (response.isSuccessful) {
+                response.body.string()
+            } else {
+                Log.w(Tag, "$url indirilemedi: HTTP ${response.code}")
+                null
+            }
+        }
+    } catch (e: IOException) {
+        Log.w(Tag, "$url indirilemedi", e)
+        null
     }
 
     private fun loadLocal(): SerinContent {

@@ -14,13 +14,17 @@ data class SerinContent(
 
     fun meditation(id: String): Meditation? = meditations.find { it.id == id }
 
-    /** JSON'daki görsel ve ses yollarını [baseUrl] ile tam adrese çevirir. */
+    fun blogPost(id: String): BlogPost? = blogPosts.find { it.id == id }
+
+    /** JSON'daki dosya yollarını (görsel, ses, yazı) [baseUrl] ile tam adrese çevirir. */
     fun resolveUrls(baseUrl: String) = copy(
         home = home.copy(banner = baseUrl + home.banner),
         meditations = meditations.map {
             it.copy(image = baseUrl + it.image, audio = it.audio?.let { audio -> baseUrl + audio })
         },
-        blogPosts = blogPosts.map { it.copy(image = baseUrl + it.image) },
+        blogPosts = blogPosts.map {
+            it.copy(image = baseUrl + it.image, body = it.body?.let { body -> baseUrl + body })
+        },
     )
 }
 
@@ -45,4 +49,6 @@ data class BlogPost(
     val id: String,
     val title: String,
     val image: String,
+    /** Yazının Markdown dosyası; yoksa detay ekranında "yakında" yazar. */
+    val body: String? = null,
 )

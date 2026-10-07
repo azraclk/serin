@@ -32,6 +32,19 @@ object SerinType {
     val BlogTitle = Base.copy(fontSize = 24.sp, lineHeight = 50.sp, textAlign = TextAlign.Center)
     val DetailTitle = Base.copy(fontSize = 24.sp, letterSpacing = 12.sp, textAlign = TextAlign.Center)
     val NavLabel = Base.copy(fontSize = 12.sp, lineHeight = 40.sp, letterSpacing = 0.6.sp)
+
+    // Blog yazısı detay ekranı; Figma'da yok, mevcut stile göre tasarlandı.
+    val PostTitle = Base.copy(fontSize = 24.sp, lineHeight = 34.sp, textAlign = TextAlign.Center)
+    val PostBody = Base.copy(fontSize = 16.sp, lineHeight = 26.sp, color = Color.Black.copy(alpha = 0.85f))
+    val PostHeading = TextStyle(
+        fontFamily = Merriweather,
+        fontWeight = FontWeight.Black,
+        fontStyle = FontStyle.Italic,
+        fontSize = 20.sp,
+        lineHeight = 28.sp,
+        color = SerinPurple,
+    )
+    val PostSubheading = Base.copy(fontSize = 17.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
 }
 
 val Typography = Typography().run {
