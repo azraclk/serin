@@ -62,14 +62,16 @@ fun MeditationDetailScreen(
     ) {
         SerinHeader()
         Spacer(Modifier.height(50.dp))
-        RemoteImage(
-            url = meditation.image,
-            fallback = bundledImage(meditation.id),
-            modifier = Modifier
-                .size(300.dp)
-                .serinShadow()
-                .clip(CardShape),
-        )
+        BreathingGlow(isPlaying = isPlaying, size = 300.dp) {
+            RemoteImage(
+                url = meditation.image,
+                fallback = bundledImage(meditation.id),
+                modifier = Modifier
+                    .size(300.dp)
+                    .serinShadow()
+                    .clip(CardShape),
+            )
+        }
         Spacer(Modifier.height(51.dp))
         Text(
             text = meditation.title,
