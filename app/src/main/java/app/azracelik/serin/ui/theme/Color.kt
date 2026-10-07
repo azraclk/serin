@@ -2,11 +2,12 @@ package app.azracelik.serin.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Figma tasarımından alınacak renklerle değiştirilecek.
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val SerinPurple = Color(0xFF756AB6)
 
-val Purple40 = Color(0xFF6650A4)
-val PurpleGrey40 = Color(0xFF625B71)
-val Pink40 = Color(0xFF7D5260)
+/** Ana sayfa kartlarının dolgusu. */
+val SerinPurpleSoft = SerinPurple.copy(alpha = 0.25f)
+
+/** Meditasyon kartlarında görselin üstündeki renk katmanı. */
+val SerinPurpleOverlay = SerinPurple.copy(alpha = 0.2f)
+
+val SerinShadow = Color.Black.copy(alpha = 0.25f)

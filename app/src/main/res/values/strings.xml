@@ -1,3 +1,39 @@
 <resources>
     <string name="app_name">Serin</string>
+    <string name="logo">serin</string>
+
+    <!-- Splash -->
+    <string name="splash_slogan">A Breath\nof\nFresh Peace.</string>
+
+    <!-- Home -->
+    <string name="home_hero_prefix">"Embrace "</string>
+    <string name="home_hero_accent">serenity</string>
+    <string name="home_hero_suffix">" and make peace your everyday companion."</string>
+
+    <!-- Alt menü -->
+    <string name="nav_home">home</string>
+    <string name="nav_meditation">meditation</string>
+    <string name="nav_blog">blog</string>
+
+    <!-- Meditasyon kategorileri -->
+    <string name="med_mindfulness">mindfulness</string>
+    <string name="med_breathing">breathing</string>
+    <string name="med_sleep">sleep</string>
+    <string name="med_stress_relief">stress relief</string>
+    <string name="med_focus">focus</string>
+    <string name="med_chakra">chakra</string>
+
+    <!-- Meditasyon başlıkları -->
+    <string name="med_title_mindfulness">Stillness Within</string>
+    <string name="med_title_breathing">Rhythm of Life</string>
+    <string name="med_title_sleep">Nightfall Harmony</string>
+    <string name="med_title_stress_relief">Inner Refuge</string>
+    <string name="med_title_focus">One Point</string>
+    <string name="med_title_chakra">Energy Alignment</string>
+    <string name="play">Play</string>
+
+    <!-- Blog -->
+    <string name="blog_history">The History of Meditation: From Past to Present</string>
+    <string name="blog_habit">21-Day Mindfulness Habit Formation Plan</string>
+    <string name="blog_frequencies">The Power of Frequencies: 432 Hz and 528 Hz Music</string>
 </resources>
