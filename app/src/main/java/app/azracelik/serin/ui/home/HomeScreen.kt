@@ -25,7 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -48,8 +47,6 @@ import app.azracelik.serin.ui.components.SerinHeader
 import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.theme.Merriweather
-import app.azracelik.serin.ui.theme.SerinPurple
-import app.azracelik.serin.ui.theme.SerinPurpleSoft
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
 
@@ -64,7 +61,7 @@ fun HomeScreen(
     Column(
         modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(SerinTheme.colors.background)
             .verticalScroll(rememberScrollState())
             .padding(bottom = contentBottomPadding()),
     ) {
@@ -110,7 +107,7 @@ private fun Hero() {
                             fontFamily = Merriweather,
                             fontWeight = FontWeight.Black,
                             fontStyle = FontStyle.Italic,
-                            color = SerinPurple,
+                            color = SerinTheme.colors.accent,
                         ),
                     ) { append(stringResource(R.string.home_hero_accent)) }
                     append(stringResource(R.string.home_hero_suffix))
@@ -147,15 +144,16 @@ private fun BoxScope.SloganCircle(x: Dp, y: Dp) {
 
 @Composable
 private fun PostCard(post: BlogPost, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = SerinTheme.colors
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .height(133.dp)
             .serinShadow()
             .clip(CardShape)
-            .background(Color.White)
-            .background(SerinPurpleSoft)
-            .border(CardBorderWidth, SerinPurple, CardShape)
+            .background(colors.surface)
+            .background(colors.accentSoft)
+            .border(CardBorderWidth, colors.accent, CardShape)
             .clickable(onClick = onClick),
     ) {
         Text(

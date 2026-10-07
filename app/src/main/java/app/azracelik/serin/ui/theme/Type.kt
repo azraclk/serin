@@ -1,7 +1,6 @@
 package app.azracelik.serin.ui.theme
 
 import androidx.compose.material3.Typography
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -20,7 +19,8 @@ val Merriweather = FontFamily(
     Font(R.font.merriweather_black_italic, FontWeight.Black, FontStyle.Italic),
 )
 
-private val Base = TextStyle(fontFamily = Montserrat, color = Color.Black)
+/** Renk belirtilmez; metinler temanın rengini alır (bkz. SerinTheme). */
+private val Base = TextStyle(fontFamily = Montserrat)
 
 /** Figma'daki metin stilleri. */
 object SerinType {
@@ -35,20 +35,19 @@ object SerinType {
 
     // Blog yazısı detay ekranı; Figma'da yok, mevcut stile göre tasarlandı.
     val PostTitle = Base.copy(fontSize = 24.sp, lineHeight = 34.sp, textAlign = TextAlign.Center)
-    val PostBody = Base.copy(fontSize = 16.sp, lineHeight = 26.sp, color = Color.Black.copy(alpha = 0.85f))
+    val PostBody = Base.copy(fontSize = 16.sp, lineHeight = 26.sp)
     val PostHeading = TextStyle(
         fontFamily = Merriweather,
         fontWeight = FontWeight.Black,
         fontStyle = FontStyle.Italic,
         fontSize = 20.sp,
         lineHeight = 28.sp,
-        color = SerinPurple,
     )
     val PostSubheading = Base.copy(fontSize = 17.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
 
     // Seans süresi ve mini player.
     val SessionChip = Base.copy(fontSize = 14.sp, letterSpacing = 0.5.sp)
-    val SessionTime = Base.copy(fontSize = 12.sp, letterSpacing = 0.6.sp, color = Color.Black.copy(alpha = 0.55f))
+    val SessionTime = Base.copy(fontSize = 12.sp, letterSpacing = 0.6.sp)
     val MiniTitle = Base.copy(fontSize = 15.sp, lineHeight = 20.sp)
 }
 

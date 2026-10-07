@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.azracelik.serin.data.Meditation
@@ -31,8 +30,6 @@ import app.azracelik.serin.ui.components.SerinHeader
 import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.components.serinTextShadow
-import app.azracelik.serin.ui.theme.SerinPurple
-import app.azracelik.serin.ui.theme.SerinPurpleOverlay
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
 
@@ -42,7 +39,7 @@ fun MeditationScreen(
     onMeditationClick: (Meditation) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.fillMaxSize().background(Color.White)) {
+    Column(modifier.fillMaxSize().background(SerinTheme.colors.background)) {
         SerinHeader(Modifier.padding(bottom = 15.dp))
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
@@ -59,13 +56,14 @@ fun MeditationScreen(
 
 @Composable
 private fun MeditationCard(meditation: Meditation, onClick: () -> Unit) {
+    val colors = SerinTheme.colors
     Box(
         Modifier
             .height(261.dp)
             .serinShadow()
             .clip(CardShape)
-            .background(Color.White)
-            .border(CardBorderWidth, SerinPurple, CardShape)
+            .background(colors.surface)
+            .border(CardBorderWidth, colors.accent, CardShape)
             .clickable(onClick = onClick),
     ) {
         RemoteImage(
@@ -74,7 +72,7 @@ private fun MeditationCard(meditation: Meditation, onClick: () -> Unit) {
             alpha = 0.25f,
             modifier = Modifier.fillMaxSize(),
         )
-        Box(Modifier.fillMaxSize().background(SerinPurpleOverlay))
+        Box(Modifier.fillMaxSize().background(colors.overlay))
         Text(
             text = meditation.label,
             style = SerinType.CardLabel.copy(shadow = serinTextShadow()),

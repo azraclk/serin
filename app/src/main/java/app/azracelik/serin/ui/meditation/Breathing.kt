@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import app.azracelik.serin.ui.theme.SerinPurple
+import app.azracelik.serin.ui.theme.SerinTheme
 
 /** Nefes alma ve verme süresi; tam bir nefes 8 saniye. */
 private const val BreathHalfMillis = 4000
@@ -37,6 +37,7 @@ fun BreathingGlow(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
+    val glow = SerinTheme.colors.accent
     val breath = remember { Animatable(0f) }
     // Işığın görünürlüğü: çalarken belirir, duraklatınca tamamen söner.
     val presence = remember { Animatable(0f) }
@@ -69,8 +70,8 @@ fun BreathingGlow(
                 .background(
                     // Görselin kenarına kadar dolu, dışarı doğru kaybolur.
                     Brush.radialGradient(
-                        0.55f to SerinPurple.copy(alpha = 0.6f),
-                        0.75f to SerinPurple.copy(alpha = 0.25f),
+                        0.55f to glow.copy(alpha = 0.6f),
+                        0.75f to glow.copy(alpha = 0.25f),
                         1f to Color.Transparent,
                     ),
                 ),

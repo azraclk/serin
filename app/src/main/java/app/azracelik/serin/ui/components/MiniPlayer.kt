@@ -21,7 +21,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -34,7 +34,6 @@ import app.azracelik.serin.data.Meditation
 import app.azracelik.serin.data.PreviewContent
 import app.azracelik.serin.data.bundledImage
 import app.azracelik.serin.playback.SessionState
-import app.azracelik.serin.ui.theme.SerinPurple
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
 
@@ -69,6 +68,7 @@ fun MiniPlayer(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val colors = SerinTheme.colors
     Box(
         modifier
             .padding(horizontal = 12.dp)
@@ -77,8 +77,8 @@ fun MiniPlayer(
             .height(MiniPlayerHeight)
             .serinShadow(MiniPlayerShape)
             .clip(MiniPlayerShape)
-            .background(Color.White)
-            .border(2.dp, SerinPurple, MiniPlayerShape)
+            .background(colors.surface)
+            .border(2.dp, colors.accent, MiniPlayerShape)
             .clickable(onClick = onClick),
     ) {
         Row(
@@ -102,11 +102,15 @@ fun MiniPlayer(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(text = formatDuration(session.remainingMs), style = SerinType.SessionTime)
+                Text(
+                    text = formatDuration(session.remainingMs),
+                    style = SerinType.SessionTime.copy(color = colors.textMuted),
+                )
             }
             Image(
                 painter = painterResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play),
                 contentDescription = stringResource(if (isPlaying) R.string.pause else R.string.play),
+                colorFilter = ColorFilter.tint(colors.text),
                 modifier = Modifier
                     .clip(CircleShape)
                     .clickable(role = Role.Button, onClick = onToggle)
@@ -116,6 +120,7 @@ fun MiniPlayer(
             Image(
                 painter = painterResource(R.drawable.ic_close),
                 contentDescription = stringResource(R.string.close),
+                colorFilter = ColorFilter.tint(colors.text),
                 modifier = Modifier
                     .clip(CircleShape)
                     .clickable(role = Role.Button, onClick = onClose)
@@ -129,7 +134,7 @@ fun MiniPlayer(
                 .align(Alignment.BottomStart)
                 .fillMaxWidth(session.progress)
                 .height(3.dp)
-                .background(SerinPurple),
+                .background(colors.accent),
         )
     }
 }

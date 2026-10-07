@@ -13,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -40,6 +39,7 @@ import app.azracelik.serin.ui.home.HomeScreen
 import app.azracelik.serin.ui.meditation.MeditationDetailScreen
 import app.azracelik.serin.ui.meditation.MeditationScreen
 import app.azracelik.serin.ui.splash.SplashScreen
+import app.azracelik.serin.ui.theme.SerinTheme
 
 private object Routes {
     const val SPLASH = "splash"
@@ -83,7 +83,7 @@ fun SerinApp(
         backStackEntry?.arguments?.getString("id") == playback.mediaId
     val showMiniPlayer = selectedTab != null && sessionMeditation != null && !onSessionDetail
 
-    Box(Modifier.fillMaxSize().background(Color.White)) {
+    Box(Modifier.fillMaxSize().background(SerinTheme.colors.background)) {
         CompositionLocalProvider(LocalMiniPlayerInset provides if (showMiniPlayer) MiniPlayerInset else 0.dp) {
             NavHost(navController, startDestination = Routes.SPLASH) {
                 composable(Routes.SPLASH) {

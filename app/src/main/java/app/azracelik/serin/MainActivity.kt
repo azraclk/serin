@@ -11,10 +11,10 @@ import app.azracelik.serin.ui.theme.SerinTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Arka plan her zaman beyaz olduğu için sistem çubuklarında koyu ikonlar kullanılır.
+        // Sistem çubuklarının ikonları temaya göre koyu (açık tema) ya da açık (gece teması) olur.
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+            statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
         )
         setContent {
             SerinTheme {

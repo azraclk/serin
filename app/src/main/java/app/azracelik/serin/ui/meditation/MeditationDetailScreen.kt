@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -48,7 +49,6 @@ import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.formatDuration
 import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.components.serinTextShadow
-import app.azracelik.serin.ui.theme.SerinPurple
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
 
@@ -62,11 +62,12 @@ fun MeditationDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val hasAudio = meditation.audio != null
+    val colors = SerinTheme.colors
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colors.background)
             .verticalScroll(rememberScrollState())
             .padding(bottom = contentBottomPadding()),
     ) {
@@ -98,6 +99,7 @@ fun MeditationDetailScreen(
         Image(
             painter = painterResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play),
             contentDescription = stringResource(if (isPlaying) R.string.pause else R.string.play),
+            colorFilter = ColorFilter.tint(colors.text),
             modifier = Modifier
                 .size(50.dp)
                 .alpha(if (hasAudio) 1f else 0.3f)
@@ -110,16 +112,17 @@ fun MeditationDetailScreen(
 /** Seans süresi seçimi: 5 / 10 / 20 dk. */
 @Composable
 private fun SessionLengthPicker(selected: Int, onSelect: (Int) -> Unit) {
+    val colors = SerinTheme.colors
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         MeditationSession.LengthsMinutes.forEach { minutes ->
             val isSelected = minutes == selected
             Text(
                 text = stringResource(R.string.session_minutes, minutes),
-                style = SerinType.SessionChip.copy(color = if (isSelected) Color.White else SerinPurple),
+                style = SerinType.SessionChip.copy(color = if (isSelected) colors.onAccent else colors.accent),
                 modifier = Modifier
                     .clip(ChipShape)
-                    .background(if (isSelected) SerinPurple else Color.Transparent)
-                    .border(1.5.dp, SerinPurple, ChipShape)
+                    .background(if (isSelected) colors.accent else Color.Transparent)
+                    .border(1.5.dp, colors.accent, ChipShape)
                     .selectable(selected = isSelected, role = Role.RadioButton, onClick = { onSelect(minutes) })
                     .padding(horizontal = 16.dp, vertical = 6.dp),
             )
@@ -132,6 +135,7 @@ private val ChipShape = RoundedCornerShape(50)
 /** Figma'daki çizgi; seansın geçen kısmı mor ile dolar, altında kalan süre yazar. */
 @Composable
 private fun ProgressLine(progress: Float, remainingMs: Long) {
+    val colors = SerinTheme.colors
     Box(
         contentAlignment = Alignment.BottomCenter,
         modifier = Modifier
@@ -140,14 +144,14 @@ private fun ProgressLine(progress: Float, remainingMs: Long) {
     ) {
         Canvas(Modifier.fillMaxSize()) {
             val y = size.height / 2
-            drawLine(Color.Black, Offset(0f, y), Offset(size.width, y), 2.dp.toPx(), StrokeCap.Round)
+            drawLine(colors.track, Offset(0f, y), Offset(size.width, y), 2.dp.toPx(), StrokeCap.Round)
             if (progress > 0f) {
-                drawLine(SerinPurple, Offset(0f, y), Offset(size.width * progress, y), 4.dp.toPx(), StrokeCap.Round)
+                drawLine(colors.accent, Offset(0f, y), Offset(size.width * progress, y), 4.dp.toPx(), StrokeCap.Round)
             }
         }
         Text(
             text = formatDuration(remainingMs),
-            style = SerinType.SessionTime,
+            style = SerinType.SessionTime.copy(color = colors.textMuted),
             modifier = Modifier.padding(bottom = 6.dp),
         )
     }

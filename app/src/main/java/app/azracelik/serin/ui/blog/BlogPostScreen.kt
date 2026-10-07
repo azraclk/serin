@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -37,7 +36,6 @@ import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.markdown.Markdown
 import app.azracelik.serin.ui.markdown.MdBlock
 import app.azracelik.serin.ui.markdown.parseMarkdown
-import app.azracelik.serin.ui.theme.SerinPurple
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
 
@@ -57,7 +55,7 @@ fun BlogPostScreen(
     modifier: Modifier = Modifier,
 ) {
     // Başlık sabit kalır, yazı altında kayar (blog listesindeki gibi).
-    Column(modifier.fillMaxSize().background(Color.White)) {
+    Column(modifier.fillMaxSize().background(SerinTheme.colors.background)) {
         SerinHeader(Modifier.padding(bottom = 15.dp))
         PostContent(post, body, onRetry)
     }
@@ -65,6 +63,7 @@ fun BlogPostScreen(
 
 @Composable
 private fun PostContent(post: BlogPost, body: PostBodyState, onRetry: () -> Unit) {
+    val colors = SerinTheme.colors
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -94,11 +93,11 @@ private fun PostContent(post: BlogPost, body: PostBodyState, onRetry: () -> Unit
             Modifier
                 .size(width = 48.dp, height = 3.dp)
                 .clip(RoundedCornerShape(50))
-                .background(SerinPurple),
+                .background(colors.accent),
         )
         Spacer(Modifier.height(28.dp))
         when (body) {
-            PostBodyState.Loading -> CircularProgressIndicator(color = SerinPurple)
+            PostBodyState.Loading -> CircularProgressIndicator(color = colors.accent)
             is PostBodyState.Loaded -> Markdown(
                 body.blocks,
                 Modifier
@@ -108,7 +107,7 @@ private fun PostContent(post: BlogPost, body: PostBodyState, onRetry: () -> Unit
             PostBodyState.Failed -> Message(stringResource(R.string.post_failed)) {
                 Text(
                     text = stringResource(R.string.try_again),
-                    style = SerinType.PostBody.copy(color = SerinPurple),
+                    style = SerinType.PostBody.copy(color = colors.accent),
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
                         .clickable(role = Role.Button, onClick = onRetry)
@@ -123,7 +122,10 @@ private fun PostContent(post: BlogPost, body: PostBodyState, onRetry: () -> Unit
 @Composable
 private fun Message(text: String, action: @Composable () -> Unit = {}) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 40.dp)) {
-        Text(text, style = SerinType.PostBody.copy(textAlign = TextAlign.Center))
+        Text(
+            text,
+            style = SerinType.PostBody.copy(textAlign = TextAlign.Center, color = SerinTheme.colors.textSoft),
+        )
         Spacer(Modifier.height(12.dp))
         action()
     }

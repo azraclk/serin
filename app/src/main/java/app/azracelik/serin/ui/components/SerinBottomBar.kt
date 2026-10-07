@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.innerShadow
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -32,7 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.azracelik.serin.R
-import app.azracelik.serin.ui.theme.SerinPurple
+import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
 
 enum class SerinTab(
@@ -63,6 +64,7 @@ fun SerinBottomBar(
     onSelect: (SerinTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val colors = SerinTheme.colors
     BoxWithConstraints(modifier.fillMaxWidth().height(bottomBarHeight())) {
         fun centerOf(tab: SerinTab) = maxWidth * (tab.centerX / DesignWidth)
 
@@ -71,6 +73,7 @@ fun SerinBottomBar(
         Image(
             painter = painterResource(R.drawable.nav_selection),
             contentDescription = null,
+            colorFilter = ColorFilter.tint(colors.bar),
             modifier = Modifier.offset(x = selectionX).size(SelectionSize),
         )
         Box(
@@ -78,7 +81,7 @@ fun SerinBottomBar(
                 .offset(y = BumpHeight)
                 .fillMaxWidth()
                 .height(maxHeight - BumpHeight)
-                .background(SerinPurple)
+                .background(colors.bar)
                 .innerShadow(RectangleShape, SerinDropShadow),
         )
         SerinTab.entries.forEach { tab ->
@@ -95,11 +98,12 @@ fun SerinBottomBar(
                 Image(
                     painter = painterResource(tab.icon),
                     contentDescription = null,
+                    colorFilter = ColorFilter.tint(colors.onBar),
                     modifier = Modifier.size(24.dp),
                 )
                 Text(
                     text = stringResource(tab.label),
-                    style = SerinType.NavLabel,
+                    style = SerinType.NavLabel.copy(color = colors.onBar),
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                     maxLines = 1,
                     modifier = Modifier.offset(y = 2.dp),
