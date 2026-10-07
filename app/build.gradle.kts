@@ -55,6 +55,8 @@ dependencies {
     implementation(libs.coil.network.okhttp)
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.session)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

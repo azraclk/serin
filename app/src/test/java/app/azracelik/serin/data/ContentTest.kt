@@ -19,7 +19,10 @@ class ContentTest {
     @Test
     fun imagePathsResolveToContentRepo() {
         assertEquals(ContentBaseUrl + "images/home/banner.jpg", bundled.home.banner)
-        bundled.meditations.forEach { assertTrue(it.image.startsWith(ContentBaseUrl)) }
+        bundled.meditations.forEach {
+            assertTrue(it.image.startsWith(ContentBaseUrl))
+            assertTrue(it.audio.orEmpty().startsWith(ContentBaseUrl))
+        }
     }
 
     @Test

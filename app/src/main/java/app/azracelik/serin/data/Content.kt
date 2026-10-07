@@ -14,10 +14,12 @@ data class SerinContent(
 
     fun meditation(id: String): Meditation? = meditations.find { it.id == id }
 
-    /** JSON'daki görsel yollarını [baseUrl] ile tam adrese çevirir. */
-    fun resolveImages(baseUrl: String) = copy(
+    /** JSON'daki görsel ve ses yollarını [baseUrl] ile tam adrese çevirir. */
+    fun resolveUrls(baseUrl: String) = copy(
         home = home.copy(banner = baseUrl + home.banner),
-        meditations = meditations.map { it.copy(image = baseUrl + it.image) },
+        meditations = meditations.map {
+            it.copy(image = baseUrl + it.image, audio = it.audio?.let { audio -> baseUrl + audio })
+        },
         blogPosts = blogPosts.map { it.copy(image = baseUrl + it.image) },
     )
 }
@@ -34,6 +36,8 @@ data class Meditation(
     val label: String,
     val title: String,
     val image: String,
+    /** Sesi olmayan meditasyonlarda play butonu pasif görünür. */
+    val audio: String? = null,
 )
 
 @Serializable

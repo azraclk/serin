@@ -20,7 +20,7 @@ private const val Tag = "ContentRepository"
 private val json = Json { ignoreUnknownKeys = true }
 
 fun parseContent(text: String): SerinContent =
-    json.decodeFromString<SerinContent>(text).resolveImages(ContentBaseUrl)
+    json.decodeFromString<SerinContent>(text).resolveUrls(ContentBaseUrl)
 
 /**
  * İçeriği GitHub'daki serin-content reposundan indirir. Son başarılı indirme telefonda saklanır;

@@ -18,6 +18,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.azracelik.serin.data.Meditation
+import app.azracelik.serin.playback.PlayerViewModel
 import app.azracelik.serin.ui.blog.BlogScreen
 import app.azracelik.serin.ui.components.SerinBottomBar
 import app.azracelik.serin.ui.components.SerinTab
@@ -44,8 +45,12 @@ private val SerinTab.route
     }
 
 @Composable
-fun SerinApp(contentViewModel: ContentViewModel = viewModel()) {
+fun SerinApp(
+    contentViewModel: ContentViewModel = viewModel(),
+    playerViewModel: PlayerViewModel = viewModel(),
+) {
     val content by contentViewModel.content.collectAsStateWithLifecycle()
+    val playback by playerViewModel.state.collectAsStateWithLifecycle()
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val selectedTab = when (backStackEntry?.destination?.route) {
@@ -81,8 +86,13 @@ fun SerinApp(contentViewModel: ContentViewModel = viewModel()) {
             ) { entry ->
                 // İçerik güncellenip bu meditasyon kaldırılmışsa ekran boş kalır.
                 content.meditation(entry.arguments?.getString("id").orEmpty())?.let { meditation ->
-                    // Ses çalma henüz tasarımda/kapsamda yok.
-                    MeditationDetailScreen(meditation, onPlayClick = {})
+                    val isCurrent = playback.mediaId == meditation.id
+                    MeditationDetailScreen(
+                        meditation = meditation,
+                        isPlaying = isCurrent && playback.isPlaying,
+                        progress = if (isCurrent) playback.progress else 0f,
+                        onPlayClick = { playerViewModel.togglePlayback(meditation) },
+                    )
                 }
             }
             composable(Routes.BLOG) {
