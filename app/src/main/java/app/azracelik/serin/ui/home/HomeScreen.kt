@@ -26,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -39,8 +38,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.azracelik.serin.R
 import app.azracelik.serin.data.BlogPost
+import app.azracelik.serin.data.HomeBannerId
+import app.azracelik.serin.data.PreviewContent
+import app.azracelik.serin.data.bundledImage
 import app.azracelik.serin.ui.components.CardBorderWidth
 import app.azracelik.serin.ui.components.CardShape
+import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.components.SerinHeader
 import app.azracelik.serin.ui.components.bottomBarHeight
 import app.azracelik.serin.ui.components.serinShadow
@@ -52,6 +55,8 @@ import app.azracelik.serin.ui.theme.SerinType
 
 @Composable
 fun HomeScreen(
+    bannerUrl: String,
+    featuredPosts: List<BlogPost>,
     onBannerClick: () -> Unit,
     onPostClick: (BlogPost) -> Unit,
     modifier: Modifier = Modifier,
@@ -65,10 +70,9 @@ fun HomeScreen(
     ) {
         Hero()
         Spacer(Modifier.height(104.dp))
-        Image(
-            painter = painterResource(R.drawable.home_banner),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
+        RemoteImage(
+            url = bannerUrl,
+            fallback = bundledImage(HomeBannerId),
             modifier = Modifier
                 .padding(horizontal = 28.dp)
                 .fillMaxWidth()
@@ -82,7 +86,7 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.spacedBy(17.dp),
             modifier = Modifier.padding(horizontal = 28.dp),
         ) {
-            listOf(BlogPost.History, BlogPost.Frequencies).forEach { post ->
+            featuredPosts.forEach { post ->
                 PostCard(post, onClick = { onPostClick(post) }, modifier = Modifier.weight(1f))
             }
         }
@@ -155,7 +159,7 @@ private fun PostCard(post: BlogPost, onClick: () -> Unit, modifier: Modifier = M
             .clickable(onClick = onClick),
     ) {
         Text(
-            text = stringResource(post.title),
+            text = post.title,
             style = SerinType.HomeCard,
             modifier = Modifier.width(104.dp),
         )
@@ -165,5 +169,12 @@ private fun PostCard(post: BlogPost, onClick: () -> Unit, modifier: Modifier = M
 @Preview(widthDp = 393, heightDp = 852)
 @Composable
 private fun HomeScreenPreview() {
-    SerinTheme { HomeScreen(onBannerClick = {}, onPostClick = {}) }
+    SerinTheme {
+        HomeScreen(
+            bannerUrl = PreviewContent.home.banner,
+            featuredPosts = PreviewContent.featuredPosts,
+            onBannerClick = {},
+            onPostClick = {},
+        )
+    }
 }

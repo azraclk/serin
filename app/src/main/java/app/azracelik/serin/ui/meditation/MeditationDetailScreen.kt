@@ -18,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -26,7 +25,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.azracelik.serin.R
 import app.azracelik.serin.data.Meditation
+import app.azracelik.serin.data.PreviewContent
+import app.azracelik.serin.data.bundledImage
 import app.azracelik.serin.ui.components.CardShape
+import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.components.SerinHeader
 import app.azracelik.serin.ui.components.bottomBarHeight
 import app.azracelik.serin.ui.components.serinShadow
@@ -50,10 +52,9 @@ fun MeditationDetailScreen(
     ) {
         SerinHeader()
         Spacer(Modifier.height(50.dp))
-        Image(
-            painter = painterResource(meditation.image),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
+        RemoteImage(
+            url = meditation.image,
+            fallback = bundledImage(meditation.id),
             modifier = Modifier
                 .size(300.dp)
                 .serinShadow()
@@ -61,7 +62,7 @@ fun MeditationDetailScreen(
         )
         Spacer(Modifier.height(51.dp))
         Text(
-            text = stringResource(meditation.title),
+            text = meditation.title,
             style = SerinType.DetailTitle.copy(shadow = serinTextShadow()),
             maxLines = 1,
         )
@@ -82,5 +83,5 @@ fun MeditationDetailScreen(
 @Preview(widthDp = 393, heightDp = 852)
 @Composable
 private fun MeditationDetailScreenPreview() {
-    SerinTheme { MeditationDetailScreen(Meditation.StressRelief, onPlayClick = {}) }
+    SerinTheme { MeditationDetailScreen(PreviewContent.meditations[3], onPlayClick = {}) }
 }

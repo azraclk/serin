@@ -8,6 +8,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -28,10 +30,10 @@ private object Routes {
     const val SPLASH = "splash"
     const val HOME = "home"
     const val MEDITATION = "meditation"
-    const val MEDITATION_DETAIL = "meditation/{name}"
+    const val MEDITATION_DETAIL = "meditation/{id}"
     const val BLOG = "blog"
 
-    fun meditationDetail(meditation: Meditation) = "meditation/${meditation.name}"
+    fun meditationDetail(meditation: Meditation) = "meditation/${meditation.id}"
 }
 
 private val SerinTab.route
@@ -42,7 +44,8 @@ private val SerinTab.route
     }
 
 @Composable
-fun SerinApp() {
+fun SerinApp(contentViewModel: ContentViewModel = viewModel()) {
+    val content by contentViewModel.content.collectAsStateWithLifecycle()
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val selectedTab = when (backStackEntry?.destination?.route) {
@@ -63,24 +66,28 @@ fun SerinApp() {
             }
             composable(Routes.HOME) {
                 HomeScreen(
+                    bannerUrl = content.home.banner,
+                    featuredPosts = content.featuredPosts,
                     onBannerClick = { navController.navigateToTab(SerinTab.Meditation) },
                     onPostClick = { navController.navigateToTab(SerinTab.Blog) },
                 )
             }
             composable(Routes.MEDITATION) {
-                MeditationScreen(onMeditationClick = { navController.navigate(Routes.meditationDetail(it)) })
+                MeditationScreen(content.meditations, onMeditationClick = { navController.navigate(Routes.meditationDetail(it)) })
             }
             composable(
                 Routes.MEDITATION_DETAIL,
-                arguments = listOf(navArgument("name") { type = NavType.StringType }),
+                arguments = listOf(navArgument("id") { type = NavType.StringType }),
             ) { entry ->
-                val meditation = Meditation.valueOf(entry.arguments?.getString("name").orEmpty())
-                // Ses çalma henüz tasarımda/kapsamda yok.
-                MeditationDetailScreen(meditation, onPlayClick = {})
+                // İçerik güncellenip bu meditasyon kaldırılmışsa ekran boş kalır.
+                content.meditation(entry.arguments?.getString("id").orEmpty())?.let { meditation ->
+                    // Ses çalma henüz tasarımda/kapsamda yok.
+                    MeditationDetailScreen(meditation, onPlayClick = {})
+                }
             }
             composable(Routes.BLOG) {
                 // Blog yazısı detay ekranı henüz tasarımda yok.
-                BlogScreen(onPostClick = {})
+                BlogScreen(content.blogPosts, onPostClick = {})
             }
         }
 

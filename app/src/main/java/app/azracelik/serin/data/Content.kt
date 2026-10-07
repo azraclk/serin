@@ -1,27 +1,44 @@
 package app.azracelik.serin.data
 
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
-import app.azracelik.serin.R
+import kotlinx.serialization.Serializable
 
-enum class Meditation(
-    @StringRes val label: Int,
-    @StringRes val title: Int,
-    @DrawableRes val image: Int,
+/** serin-content reposundaki content.json dosyasının karşılığı. */
+@Serializable
+data class SerinContent(
+    val home: HomeContent,
+    val meditations: List<Meditation>,
+    val blogPosts: List<BlogPost>,
 ) {
-    Mindfulness(R.string.med_mindfulness, R.string.med_title_mindfulness, R.drawable.med_mindfulness),
-    Breathing(R.string.med_breathing, R.string.med_title_breathing, R.drawable.med_breathing),
-    Sleep(R.string.med_sleep, R.string.med_title_sleep, R.drawable.med_sleep),
-    StressRelief(R.string.med_stress_relief, R.string.med_title_stress_relief, R.drawable.med_stress_relief),
-    Focus(R.string.med_focus, R.string.med_title_focus, R.drawable.med_focus),
-    Chakra(R.string.med_chakra, R.string.med_title_chakra, R.drawable.med_chakra),
+    val featuredPosts: List<BlogPost>
+        get() = home.featuredPosts.mapNotNull { id -> blogPosts.find { it.id == id } }
+
+    fun meditation(id: String): Meditation? = meditations.find { it.id == id }
+
+    /** JSON'daki görsel yollarını [baseUrl] ile tam adrese çevirir. */
+    fun resolveImages(baseUrl: String) = copy(
+        home = home.copy(banner = baseUrl + home.banner),
+        meditations = meditations.map { it.copy(image = baseUrl + it.image) },
+        blogPosts = blogPosts.map { it.copy(image = baseUrl + it.image) },
+    )
 }
 
-enum class BlogPost(
-    @StringRes val title: Int,
-    @DrawableRes val image: Int,
-) {
-    History(R.string.blog_history, R.drawable.blog_inner_refuge),
-    Habit(R.string.blog_habit, R.drawable.blog_stillness_within),
-    Frequencies(R.string.blog_frequencies, R.drawable.blog_energy_alignment),
-}
+@Serializable
+data class HomeContent(
+    val banner: String,
+    val featuredPosts: List<String>,
+)
+
+@Serializable
+data class Meditation(
+    val id: String,
+    val label: String,
+    val title: String,
+    val image: String,
+)
+
+@Serializable
+data class BlogPost(
+    val id: String,
+    val title: String,
+    val image: String,
+)
