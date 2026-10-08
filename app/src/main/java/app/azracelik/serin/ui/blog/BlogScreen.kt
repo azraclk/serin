@@ -9,9 +9,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
@@ -29,6 +29,7 @@ import app.azracelik.serin.ui.components.CardShape
 import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.components.SerinHeader
 import app.azracelik.serin.ui.components.contentBottomPadding
+import app.azracelik.serin.ui.components.scaledByFont
 import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.components.serinTextShadow
 import app.azracelik.serin.ui.theme.SerinTheme
@@ -60,7 +61,7 @@ private fun BlogCard(post: BlogPost, onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxWidth()
-            .height(186.dp)
+            .heightIn(min = 186.dp)
             .serinShadow()
             .clip(CardShape)
             .background(colors.surface)
@@ -76,7 +77,9 @@ private fun BlogCard(post: BlogPost, onClick: () -> Unit) {
         Text(
             text = post.title,
             style = SerinType.BlogTitle.copy(shadow = serinTextShadow()),
-            modifier = Modifier.width(259.dp),
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .widthIn(max = 259.dp.scaledByFont()),
         )
     }
 }

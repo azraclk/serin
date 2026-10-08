@@ -6,7 +6,9 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import app.azracelik.serin.R
 
@@ -28,10 +30,11 @@ object SerinType {
     val Display = Base.copy(fontSize = 36.sp, textAlign = TextAlign.Center)
     val Splash = Display.copy(lineHeight = 40.sp, letterSpacing = 1.8.sp)
     val CardLabel = Base.copy(fontSize = 20.sp, textAlign = TextAlign.Center)
-    val HomeCard = Base.copy(fontSize = 16.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
-    val BlogTitle = Base.copy(fontSize = 24.sp, lineHeight = 50.sp, textAlign = TextAlign.Center)
+    val HomeCard = Base.copy(fontSize = 16.sp, lineHeight = 20.sp, textAlign = TextAlign.Center, hyphens = Hyphens.Auto)
+    val BlogTitle = Base.copy(fontSize = 24.sp, lineHeight = 50.sp, textAlign = TextAlign.Center, hyphens = Hyphens.Auto)
     val DetailTitle = Base.copy(fontSize = 24.sp, letterSpacing = 12.sp, textAlign = TextAlign.Center)
-    val NavLabel = Base.copy(fontSize = 12.sp, lineHeight = 40.sp, letterSpacing = 0.6.sp)
+    // Satır yüksekliği Figma'daki 40sp; yazı küçülünce (FitText) onunla birlikte küçülsün diye em.
+    val NavLabel = Base.copy(fontSize = 12.sp, lineHeight = (40f / 12f).em, letterSpacing = 0.05.em)
 
     // Blog yazısı detay ekranı; Figma'da yok, mevcut stile göre tasarlandı.
     val PostTitle = Base.copy(fontSize = 24.sp, lineHeight = 34.sp, textAlign = TextAlign.Center)

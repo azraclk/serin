@@ -12,11 +12,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -45,6 +48,7 @@ import app.azracelik.serin.ui.components.CardShape
 import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.components.SerinHeader
 import app.azracelik.serin.ui.components.contentBottomPadding
+import app.azracelik.serin.ui.components.scaledByFont
 import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.theme.Merriweather
 import app.azracelik.serin.ui.theme.SerinTheme
@@ -81,10 +85,13 @@ fun HomeScreen(
         Spacer(Modifier.height(49.dp))
         Row(
             horizontalArrangement = Arrangement.spacedBy(17.dp),
-            modifier = Modifier.padding(horizontal = 28.dp),
+            modifier = Modifier
+                .padding(horizontal = 28.dp)
+                // İki kart, uzun olanın yüksekliğini alır.
+                .height(IntrinsicSize.Min),
         ) {
             featuredPosts.forEach { post ->
-                PostCard(post, onClick = { onPostClick(post) }, modifier = Modifier.weight(1f))
+                PostCard(post, onClick = { onPostClick(post) }, modifier = Modifier.weight(1f).fillMaxHeight())
             }
         }
     }
@@ -116,8 +123,8 @@ private fun Hero() {
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .offset(x = 3.dp)
-                    .width(251.dp)
-                    .height(220.dp),
+                    .widthIn(max = 251.dp.scaledByFont())
+                    .heightIn(min = 220.dp),
             )
         }
         // Üçüncü daire Figma'da metnin üzerinde duruyor.
@@ -148,7 +155,7 @@ private fun PostCard(post: BlogPost, onClick: () -> Unit, modifier: Modifier = M
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .height(133.dp)
+            .heightIn(min = 133.dp)
             .serinShadow()
             .clip(CardShape)
             .background(colors.surface)
@@ -159,7 +166,9 @@ private fun PostCard(post: BlogPost, onClick: () -> Unit, modifier: Modifier = M
         Text(
             text = post.title,
             style = SerinType.HomeCard,
-            modifier = Modifier.width(104.dp),
+            modifier = Modifier
+                .padding(horizontal = 8.dp, vertical = 12.dp)
+                .widthIn(max = 104.dp.scaledByFont()),
         )
     }
 }

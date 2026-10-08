@@ -8,12 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,6 +25,7 @@ import app.azracelik.serin.data.PreviewContent
 import app.azracelik.serin.data.bundledImage
 import app.azracelik.serin.ui.components.CardBorderWidth
 import app.azracelik.serin.ui.components.CardShape
+import app.azracelik.serin.ui.components.FitText
 import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.components.SerinHeader
 import app.azracelik.serin.ui.components.contentBottomPadding
@@ -73,12 +74,13 @@ private fun MeditationCard(meditation: Meditation, onClick: () -> Unit) {
             modifier = Modifier.fillMaxSize(),
         )
         Box(Modifier.fillMaxSize().background(colors.overlay))
-        Text(
+        FitText(
             text = meditation.label,
             style = SerinType.CardLabel.copy(shadow = serinTextShadow()),
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 6.dp),
+                .fillMaxWidth()
+                .padding(top = 6.dp, start = 8.dp, end = 8.dp),
         )
     }
 }

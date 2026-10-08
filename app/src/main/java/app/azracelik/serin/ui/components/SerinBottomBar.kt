@@ -17,8 +17,8 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -51,7 +51,7 @@ private const val DesignWidth = 393f
 private val BumpHeight = 22.dp
 private val SlabHeight = 80.dp
 private val SelectionSize = 75.dp
-private val ItemWidth = 96.dp
+private val ItemWidth = 116.dp
 
 /** Alt menünün ekranın altından kapladığı yükseklik; kaydırılan içerik bu kadar boşluk bırakmalı. */
 @Composable
@@ -101,12 +101,16 @@ fun SerinBottomBar(
                     colorFilter = ColorFilter.tint(colors.onBar),
                     modifier = Modifier.size(24.dp),
                 )
-                Text(
+                FitText(
                     text = stringResource(tab.label),
-                    style = SerinType.NavLabel.copy(color = colors.onBar),
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    maxLines = 1,
-                    modifier = Modifier.offset(y = 2.dp),
+                    style = SerinType.NavLabel.copy(
+                        color = colors.onBar,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    ),
+                    // Sığma hesabında yalnızca genişlik sayılsın; yükseklik menünün dışına taşabilir.
+                    modifier = Modifier
+                        .offset(y = 2.dp)
+                        .wrapContentHeight(unbounded = true),
                 )
             }
         }
