@@ -6,9 +6,7 @@
     <string name="splash_slogan">A Breath\nof\nFresh Peace.</string>
 
     <!-- Home -->
-    <string name="home_hero_prefix">"Embrace "</string>
-    <string name="home_hero_accent">serenity</string>
-    <string name="home_hero_suffix">" and make peace your everyday companion."</string>
+    <string name="home_hero_line">Slow down. A quiet moment is waiting for you.</string>
 
     <string name="greeting_morning">Good morning</string>
     <string name="greeting_afternoon">Good afternoon</string>

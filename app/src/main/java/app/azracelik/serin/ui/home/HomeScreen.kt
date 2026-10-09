@@ -8,6 +8,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,6 +42,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathOperation
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -113,12 +120,11 @@ fun HomeScreen(
             .verticalScroll(rememberScrollState())
             .padding(bottom = contentBottomPadding()),
     ) {
-        Hero()
-        Spacer(Modifier.height(56.dp))
+        Hero(greeting = stringResource(dayPart.greeting))
+        Spacer(Modifier.height(24.dp))
         if (pick != null) {
             PickCard(
                 meditation = pick,
-                greeting = stringResource(dayPart.greeting),
                 sessionMinutes = sessionMinutes,
                 onClick = { onMeditationClick(pick) },
                 onStart = { onStartClick(pick) },
@@ -204,7 +210,6 @@ private fun ImageCard(
 @Composable
 private fun PickCard(
     meditation: Meditation,
-    greeting: String,
     sessionMinutes: Int,
     onClick: () -> Unit,
     onStart: () -> Unit,
@@ -217,7 +222,7 @@ private fun PickCard(
             modifier = Modifier.align(Alignment.BottomStart).padding(20.dp),
         ) {
             Text(
-                text = "$greeting · ${stringResource(R.string.home_pick_label)}",
+                text = stringResource(R.string.home_pick_label),
                 style = SerinType.Caption.copy(color = colors.textSoft),
             )
             Text(meditation.title, style = SerinType.PickTitle)
@@ -306,79 +311,59 @@ private fun PostCard(post: BlogPost, onClick: () -> Unit) {
     }
 }
 
-/** Üst kısımdaki slogan ve arkasındaki üst üste binen mor daireler. */
+/** Üst kısım: gün saatine göre selam ve arkasında yavaşça süzülen hilal. */
 @Composable
-private fun Hero() {
-    Box(Modifier.fillMaxWidth()) {
-        SloganCircle(x = (-54).dp, y = (-137).dp, drift = CircleDrifts[0])
-        SloganCircle(x = (-22).dp, y = (-178).dp, drift = CircleDrifts[1])
-        Column {
-            SerinHeader()
-            Spacer(Modifier.height(32.dp))
-            Text(
-                text = buildAnnotatedString {
-                    append(stringResource(R.string.home_hero_prefix))
-                    withStyle(
-                        SpanStyle(
-                            fontFamily = Fraunces,
-                            fontWeight = FontWeight.Normal,
-                            color = SerinTheme.colors.accent,
-                        ),
-                    ) { append(stringResource(R.string.home_hero_accent)) }
-                    append(stringResource(R.string.home_hero_suffix))
-                },
-                style = SerinType.Display,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .offset(x = 3.dp)
-                    .widthIn(max = 251.dp.scaledByFont())
-                    .heightIn(min = 220.dp),
-            )
-        }
-        // Üçüncü daire Figma'da metnin üzerinde duruyor.
-        SloganCircle(x = (-133).dp, y = (-210).dp, drift = CircleDrifts[2])
-    }
-}
-
-/** Dairenin yavaş süzülmesi: her daire farklı sürede ve yönde gidip gelir, hiçbiri senkron olmaz. */
-private class CircleDrift(val periodMillis: Int, val dx: Dp, val dy: Dp)
-
-private val CircleDrifts = listOf(
-    CircleDrift(periodMillis = 7000, dx = 14.dp, dy = (-10).dp),
-    CircleDrift(periodMillis = 9000, dx = (-12).dp, dy = 12.dp),
-    CircleDrift(periodMillis = 11000, dx = 10.dp, dy = 14.dp),
-)
-
-/**
- * 500dp çaplı, gölgeli daire. Görsel gölgeyle birlikte 556dp; daire görselin içinde (28, 12) konumunda.
- * [x], [y] dairenin ekranın sol üstüne göre konumu (durum çubuğunun altından itibaren).
- */
-@Composable
-private fun BoxScope.SloganCircle(x: Dp, y: Dp, drift: CircleDrift) {
-    val progress by rememberInfiniteTransition(label = "circleDrift").animateFloat(
+private fun Hero(greeting: String) {
+    val colors = SerinTheme.colors
+    val drift = HeroMoonDrift
+    val progress by rememberInfiniteTransition(label = "moonDrift").animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(drift.periodMillis, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
         ),
-        label = "circleDrift",
+        label = "moonDrift",
     )
-    Image(
-        painter = painterResource(R.drawable.slogan_circle),
-        contentDescription = null,
-        modifier = Modifier
-            .matchParentSize()
-            .wrapContentSize(Alignment.TopStart, unbounded = true)
-            .offset(x = x - 28.dp, y = y - 12.dp)
-            .requiredSize(556.dp)
-            // Ölçü/konum değişmez, yalnızca çizim katmanı kayar; her karede yeniden düzen yapılmaz.
-            .graphicsLayer {
-                translationX = drift.dx.toPx() * progress
-                translationY = drift.dy.toPx() * progress
-            },
-    )
+    Box(Modifier.fillMaxWidth().heightIn(min = 270.dp)) {
+        Canvas(Modifier.matchParentSize()) {
+            val center = Offset(
+                size.width - 62.dp.toPx() + drift.dx.toPx() * progress,
+                118.dp.toPx() + drift.dy.toPx() * progress,
+            )
+            val glowRadius = 200.dp.toPx()
+            drawCircle(
+                Brush.radialGradient(listOf(colors.accent.copy(alpha = 0.3f), Color.Transparent), center, glowRadius),
+                glowRadius,
+                center,
+            )
+            // Hilal: tam daireden, kaydırılmış ikinci daire çıkarılarak oyulur.
+            val full = Path().apply { addOval(Rect(center, 34.dp.toPx())) }
+            val cut = Path().apply { addOval(Rect(center + Offset((-14).dp.toPx(), (-6).dp.toPx()), 31.dp.toPx())) }
+            drawPath(Path.combine(PathOperation.Difference, full, cut), colors.accent)
+        }
+        Column {
+            SerinHeader()
+            Spacer(Modifier.height(72.dp))
+            Text(
+                text = greeting,
+                style = SerinType.Display.copy(textAlign = TextAlign.Start),
+                modifier = Modifier.padding(horizontal = ScreenPadding),
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.home_hero_line),
+                style = SerinType.Caption.copy(fontSize = 15.sp, color = colors.textMuted),
+                modifier = Modifier.padding(horizontal = ScreenPadding).widthIn(max = 280.dp.scaledByFont()),
+            )
+        }
+    }
 }
+
+/** Hilalin yavaş süzülmesi; ölçü değişmez, yalnızca çizim kayar. */
+private class MoonDrift(val periodMillis: Int, val dx: Dp, val dy: Dp)
+
+private val HeroMoonDrift = MoonDrift(periodMillis = 9000, dx = (-14).dp, dy = 12.dp)
 
 @Preview(widthDp = 393, heightDp = 852)
 @Composable
