@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.stateIn
 
 private const val PrefsName = "player"
 private const val LengthKey = "session_length_minutes"
+private const val LastMeditationKey = "last_meditation_id"
 
 data class PlaybackState(
     /** Seansı süren (çalan ya da duraklatılmış) meditasyonun id'si. */
@@ -40,6 +41,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     private var controller: MediaController? = null
 
     private val player = MutableStateFlow(PlaybackState())
+
+    /** En son çalınan meditasyonun id'si; uygulama kapanıp açılsa da korunur (ana sayfada "devam et"). */
+    private val _lastMeditationId = MutableStateFlow(prefs.getString(LastMeditationKey, null))
+    val lastMeditationId: StateFlow<String?> = _lastMeditationId
 
     val state: StateFlow<PlaybackState> = combine(player, MeditationSession.state) { player, session ->
         player.copy(session = session)
@@ -87,6 +92,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         controller.setMediaItem(item)
         controller.prepare()
         controller.play()
+        _lastMeditationId.value = meditation.id
+        prefs.edit { putString(LastMeditationKey, meditation.id) }
     }
 
     /** Çalan seansın oynat/duraklat düğmesi (mini player). */

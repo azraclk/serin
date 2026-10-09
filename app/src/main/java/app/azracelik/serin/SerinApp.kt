@@ -94,10 +94,19 @@ fun SerinApp(
                     })
                 }
                 composable(Routes.HOME) {
+                    val lastId by playerViewModel.lastMeditationId.collectAsStateWithLifecycle()
                     HomeScreen(
-                        bannerUrl = content.home.banner,
-                        featuredPosts = content.featuredPosts,
-                        onBannerClick = { navController.navigateToTab(SerinTab.Meditation) },
+                        meditations = content.meditations,
+                        blogPosts = content.blogPosts,
+                        // Seansı süren meditasyonu mini player zaten gösteriyor.
+                        resume = lastId?.takeIf { it != playback.mediaId }?.let(content::meditation),
+                        sessionMinutes = playback.session.lengthMinutes,
+                        onMeditationClick = { navController.navigate(Routes.meditationDetail(it)) },
+                        onStartClick = { meditation ->
+                            val isCurrent = playback.mediaId == meditation.id
+                            if (!(isCurrent && playback.isPlaying)) playerViewModel.togglePlayback(meditation)
+                            navController.navigate(Routes.meditationDetail(meditation))
+                        },
                         onPostClick = { navController.navigate(Routes.blogPost(it)) },
                     )
                 }

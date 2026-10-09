@@ -10,6 +10,16 @@
     <string name="home_hero_accent">serenity</string>
     <string name="home_hero_suffix">" and make peace your everyday companion."</string>
 
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <string name="greeting_night">Good night</string>
+    <string name="home_pick_label">Today\'s pick</string>
+    <string name="home_start">Start</string>
+    <string name="home_resume">Pick up where you left off</string>
+    <string name="home_explore">Explore</string>
+    <string name="home_read">Worth a read</string>
+
     <!-- Alt menü -->
     <string name="nav_home">home</string>
     <string name="nav_meditation">meditation</string>

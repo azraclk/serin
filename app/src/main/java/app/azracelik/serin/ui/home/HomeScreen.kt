@@ -1,5 +1,6 @@
 package app.azracelik.serin.ui.home
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -10,67 +11,102 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.azracelik.serin.R
 import app.azracelik.serin.data.BlogPost
-import app.azracelik.serin.data.HomeBannerId
+import app.azracelik.serin.data.Meditation
 import app.azracelik.serin.data.PreviewContent
 import app.azracelik.serin.data.bundledImage
 import app.azracelik.serin.ui.components.CardBorderWidth
 import app.azracelik.serin.ui.components.CardShape
+import app.azracelik.serin.ui.components.FitText
 import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.components.SerinHeader
 import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.scaledByFont
 import app.azracelik.serin.ui.components.serinShadow
+import app.azracelik.serin.ui.components.serinTextShadow
 import app.azracelik.serin.ui.theme.Merriweather
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
+import java.time.LocalTime
+
+/** Günün saatine göre karşılama ve önerilen meditasyon. */
+private enum class DayPart(@StringRes val greeting: Int, val meditationId: String) {
+    Morning(R.string.greeting_morning, "focus"),
+    Afternoon(R.string.greeting_afternoon, "breathing"),
+    Evening(R.string.greeting_evening, "stress-relief"),
+    Night(R.string.greeting_night, "sleep"),
+}
+
+private fun dayPartAt(hour: Int) = when (hour) {
+    in 5..11 -> DayPart.Morning
+    in 12..16 -> DayPart.Afternoon
+    in 17..21 -> DayPart.Evening
+    else -> DayPart.Night
+}
+
+private val ScreenPadding = 28.dp
+private val SectionGap = 32.dp
 
 @Composable
 fun HomeScreen(
-    bannerUrl: String,
-    featuredPosts: List<BlogPost>,
-    onBannerClick: () -> Unit,
+    meditations: List<Meditation>,
+    blogPosts: List<BlogPost>,
+    /** Daha önce dinlenmiş ve şu an seansı sürmeyen meditasyon; yoksa kart gösterilmez. */
+    resume: Meditation?,
+    sessionMinutes: Int,
+    onMeditationClick: (Meditation) -> Unit,
+    onStartClick: (Meditation) -> Unit,
     onPostClick: (BlogPost) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dayPart = remember { dayPartAt(LocalTime.now().hour) }
+    val pick = meditations.find { it.id == dayPart.meditationId } ?: meditations.firstOrNull()
     Column(
         modifier
             .fillMaxSize()
@@ -79,44 +115,197 @@ fun HomeScreen(
             .padding(bottom = contentBottomPadding()),
     ) {
         Hero()
-        Spacer(Modifier.height(104.dp))
-        RemoteImage(
-            url = bannerUrl,
-            fallback = bundledImage(HomeBannerId),
-            modifier = Modifier
-                .padding(horizontal = 28.dp)
-                .fillMaxWidth()
-                .height(141.dp)
-                .serinShadow()
-                .clip(CardShape)
-                .clickable(onClick = onBannerClick),
-        )
-        Spacer(Modifier.height(49.dp))
-        // Büyük yazıda iki dar kart kelimeleri tireyle bölüyor; kartlar alt alta dizilir.
-        val stacked = LocalDensity.current.fontScale > StackCardsFontScale
-        val cardsModifier = Modifier.padding(horizontal = 28.dp)
-        val cards: @Composable (Modifier) -> Unit = { cardModifier ->
-            featuredPosts.forEach { post ->
-                PostCard(post, onClick = { onPostClick(post) }, modifier = cardModifier)
+        Spacer(Modifier.height(56.dp))
+        if (pick != null) {
+            PickCard(
+                meditation = pick,
+                greeting = stringResource(dayPart.greeting),
+                sessionMinutes = sessionMinutes,
+                onClick = { onMeditationClick(pick) },
+                onStart = { onStartClick(pick) },
+                modifier = Modifier.padding(horizontal = ScreenPadding),
+            )
+        }
+        if (resume != null && resume.id != pick?.id) {
+            Spacer(Modifier.height(16.dp))
+            ResumeCard(
+                meditation = resume,
+                onClick = { onStartClick(resume) },
+                modifier = Modifier.padding(horizontal = ScreenPadding),
+            )
+        }
+        if (meditations.isNotEmpty()) {
+            Spacer(Modifier.height(SectionGap))
+            SectionTitle(R.string.home_explore)
+            HorizontalList {
+                meditations.forEach { MeditationChip(it, onClick = { onMeditationClick(it) }) }
             }
         }
-        if (stacked) {
-            Column(verticalArrangement = Arrangement.spacedBy(17.dp), modifier = cardsModifier) {
-                cards(Modifier.fillMaxWidth())
-            }
-        } else {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(17.dp),
-                // İki kart, uzun olanın yüksekliğini alır.
-                modifier = cardsModifier.height(IntrinsicSize.Min),
-            ) {
-                cards(Modifier.weight(1f).fillMaxHeight())
+        if (blogPosts.isNotEmpty()) {
+            Spacer(Modifier.height(SectionGap))
+            SectionTitle(R.string.home_read)
+            HorizontalList {
+                blogPosts.forEach { PostCard(it, onClick = { onPostClick(it) }) }
             }
         }
     }
 }
 
-private const val StackCardsFontScale = 1.3f
+@Composable
+private fun SectionTitle(@StringRes title: Int) {
+    Text(
+        text = stringResource(title),
+        style = SerinType.SectionTitle,
+        modifier = Modifier.padding(horizontal = ScreenPadding).padding(bottom = 14.dp),
+    )
+}
+
+/** Yana kaydırılan satır; ilk ve son öğenin kenar boşluğu sayfayla aynı. */
+@Composable
+private fun HorizontalList(content: @Composable RowScope.() -> Unit) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        modifier = Modifier
+            .horizontalScroll(rememberScrollState())
+            // Gölge kenarlarda kırpılmasın diye dikey boşluk veriliyor.
+            .padding(horizontal = ScreenPadding, vertical = 4.dp),
+        content = content,
+    )
+}
+
+/** Görselin soluk arka plan olduğu, renk katmanlı kart; ana sayfadaki tüm kartlar bunu kullanır. */
+@Composable
+private fun ImageCard(
+    imageUrl: String,
+    imageId: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    val colors = SerinTheme.colors
+    Box(
+        modifier
+            .serinShadow()
+            .clip(CardShape)
+            .background(colors.surface)
+            .border(CardBorderWidth, colors.accent, CardShape)
+            .clickable(onClick = onClick),
+    ) {
+        RemoteImage(
+            url = imageUrl,
+            fallback = bundledImage(imageId),
+            alpha = 0.25f,
+            modifier = Modifier.matchParentSize(),
+        )
+        Box(Modifier.matchParentSize().background(colors.overlay))
+        content()
+    }
+}
+
+@Composable
+private fun PickCard(
+    meditation: Meditation,
+    greeting: String,
+    sessionMinutes: Int,
+    onClick: () -> Unit,
+    onStart: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = SerinTheme.colors
+    ImageCard(meditation.image, meditation.id, onClick, modifier.fillMaxWidth().heightIn(min = 200.dp)) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.align(Alignment.BottomStart).padding(20.dp),
+        ) {
+            Text(
+                text = "$greeting · ${stringResource(R.string.home_pick_label)}",
+                style = SerinType.Caption.copy(color = colors.textSoft),
+            )
+            Text(meditation.title, style = SerinType.PickTitle)
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                StartButton(onStart)
+                Text(
+                    text = stringResource(R.string.session_minutes, sessionMinutes),
+                    style = SerinType.Caption.copy(color = colors.textSoft),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StartButton(onClick: () -> Unit) {
+    val colors = SerinTheme.colors
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(colors.accent)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(start = 12.dp, end = 18.dp, top = 8.dp, bottom = 8.dp),
+    ) {
+        Image(
+            painter = painterResource(R.drawable.ic_play),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(colors.onAccent),
+            modifier = Modifier.size(20.dp),
+        )
+        Text(stringResource(R.string.home_start), style = SerinType.SessionChip.copy(color = colors.onAccent))
+    }
+}
+
+@Composable
+private fun ResumeCard(meditation: Meditation, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = SerinTheme.colors
+    ImageCard(meditation.image, meditation.id, onClick, modifier.fillMaxWidth().heightIn(min = 72.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.home_resume), style = SerinType.Caption.copy(color = colors.textSoft))
+                Text(meditation.title, style = SerinType.MiniTitle, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            Image(
+                painter = painterResource(R.drawable.ic_play),
+                contentDescription = stringResource(R.string.play),
+                colorFilter = ColorFilter.tint(colors.onAccent),
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(colors.accent)
+                    .padding(8.dp)
+                    .size(24.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun MeditationChip(meditation: Meditation, onClick: () -> Unit) {
+    ImageCard(meditation.image, meditation.id, onClick, Modifier.size(width = 112.dp, height = 140.dp)) {
+        FitText(
+            text = meditation.label,
+            style = SerinType.Caption.copy(fontSize = 15.sp, textAlign = TextAlign.Center, shadow = serinTextShadow()),
+            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth().padding(top = 8.dp, start = 6.dp, end = 6.dp),
+        )
+    }
+}
+
+@Composable
+private fun PostCard(post: BlogPost, onClick: () -> Unit) {
+    ImageCard(post.image, post.id, onClick, Modifier.width(232.dp).heightIn(min = 140.dp)) {
+        Text(
+            text = post.title,
+            style = SerinType.HomeCard.copy(shadow = serinTextShadow()),
+            maxLines = 4,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.align(Alignment.Center).padding(horizontal = 14.dp, vertical = 10.dp),
+        )
+    }
+}
 
 /** Üst kısımdaki slogan ve arkasındaki üst üste binen mor daireler. */
 @Composable
@@ -193,38 +382,17 @@ private fun BoxScope.SloganCircle(x: Dp, y: Dp, drift: CircleDrift) {
     )
 }
 
-@Composable
-private fun PostCard(post: BlogPost, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val colors = SerinTheme.colors
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .heightIn(min = 133.dp)
-            .serinShadow()
-            .clip(CardShape)
-            .background(colors.surface)
-            .background(colors.accentSoft)
-            .border(CardBorderWidth, colors.accent, CardShape)
-            .clickable(onClick = onClick),
-    ) {
-        Text(
-            text = post.title,
-            style = SerinType.HomeCard,
-            modifier = Modifier
-                .padding(horizontal = 8.dp, vertical = 12.dp)
-                .widthIn(max = 104.dp.scaledByFont()),
-        )
-    }
-}
-
 @Preview(widthDp = 393, heightDp = 852)
 @Composable
 private fun HomeScreenPreview() {
     SerinTheme {
         HomeScreen(
-            bannerUrl = PreviewContent.home.banner,
-            featuredPosts = PreviewContent.featuredPosts,
-            onBannerClick = {},
+            meditations = PreviewContent.meditations,
+            blogPosts = PreviewContent.blogPosts,
+            resume = PreviewContent.meditations[2],
+            sessionMinutes = 10,
+            onMeditationClick = {},
+            onStartClick = {},
             onPostClick = {},
         )
     }
