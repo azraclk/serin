@@ -64,7 +64,7 @@ private fun MeditationCard(meditation: Meditation, onClick: () -> Unit) {
             .serinShadow()
             .clip(CardShape)
             .background(colors.surface)
-            .border(CardBorderWidth, colors.accent, CardShape)
+            .border(CardBorderWidth, colors.outline, CardShape)
             .clickable(onClick = onClick),
     ) {
         RemoteImage(

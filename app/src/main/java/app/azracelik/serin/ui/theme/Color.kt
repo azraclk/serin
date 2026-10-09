@@ -20,6 +20,8 @@ data class SerinColors(
     val textMuted: Color,
     /** Çerçeveler, başlıklar, bağlantılar, ilerleme. */
     val accent: Color,
+    /** Kart çerçeveleri; gece temasında vurgu rengini harcamaz. */
+    val outline: Color,
     /** Seçili düğme gibi [accent] zemin üstündeki metin. */
     val onAccent: Color,
     /** Ana sayfa kartlarının dolgusu. */
@@ -42,6 +44,7 @@ val LightColors = SerinColors(
     textSoft = Color.Black.copy(alpha = 0.85f),
     textMuted = Color.Black.copy(alpha = 0.55f),
     accent = SerinPurple,
+    outline = SerinPurple,
     onAccent = Color.White,
     accentSoft = SerinPurple.copy(alpha = 0.25f),
     overlay = SerinPurple.copy(alpha = 0.2f),
@@ -52,18 +55,21 @@ val LightColors = SerinColors(
 )
 
 private val NightText = Color(0xFFEEEBF8)
-private val NightAccent = Color(0xFFA99FE3)
+private val NightLavender = Color(0xFFA99FE3)
+/** Gece temasındaki tek sıcak vurgu: sönük ay kremi. */
+private val MoonCream = Color(0xFFE8D9A8)
 
-/** Gece teması: koyu çivit zemin, gözü yormayan açık mor vurgu. */
+/** Gece teması: koyu çivit zemin, lavanta yüzeyler, ay kremi vurgu. */
 val DarkColors = SerinColors(
     background = Color(0xFF15131F),
     surface = Color(0xFF211D33),
     text = NightText,
     textSoft = NightText.copy(alpha = 0.85f),
     textMuted = NightText.copy(alpha = 0.6f),
-    accent = NightAccent,
+    accent = MoonCream,
+    outline = NightLavender.copy(alpha = 0.45f),
     onAccent = Color(0xFF15131F),
-    accentSoft = NightAccent.copy(alpha = 0.16f),
+    accentSoft = NightLavender.copy(alpha = 0.16f),
     overlay = SerinPurple.copy(alpha = 0.3f),
     bar = Color(0xFF332C5C),
     onBar = NightText,

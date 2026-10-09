@@ -78,7 +78,7 @@ fun MiniPlayer(
             .serinShadow(MiniPlayerShape)
             .clip(MiniPlayerShape)
             .background(colors.surface)
-            .border(2.dp, colors.accent, MiniPlayerShape)
+            .border(2.dp, colors.outline, MiniPlayerShape)
             .clickable(onClick = onClick),
     ) {
         Row(

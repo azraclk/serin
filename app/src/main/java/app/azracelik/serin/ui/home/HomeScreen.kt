@@ -47,7 +47,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -70,7 +69,7 @@ import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.scaledByFont
 import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.components.serinTextShadow
-import app.azracelik.serin.ui.theme.Merriweather
+import app.azracelik.serin.ui.theme.Fraunces
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
 import java.time.LocalTime
@@ -188,7 +187,7 @@ private fun ImageCard(
             .serinShadow()
             .clip(CardShape)
             .background(colors.surface)
-            .border(CardBorderWidth, colors.accent, CardShape)
+            .border(CardBorderWidth, colors.outline, CardShape)
             .clickable(onClick = onClick),
     ) {
         RemoteImage(
@@ -321,9 +320,8 @@ private fun Hero() {
                     append(stringResource(R.string.home_hero_prefix))
                     withStyle(
                         SpanStyle(
-                            fontFamily = Merriweather,
-                            fontWeight = FontWeight.Black,
-                            fontStyle = FontStyle.Italic,
+                            fontFamily = Fraunces,
+                            fontWeight = FontWeight.Normal,
                             color = SerinTheme.colors.accent,
                         ),
                     ) { append(stringResource(R.string.home_hero_accent)) }
