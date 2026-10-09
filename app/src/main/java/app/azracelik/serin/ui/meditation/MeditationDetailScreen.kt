@@ -29,11 +29,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.azracelik.serin.R
 import app.azracelik.serin.data.Meditation
@@ -60,6 +62,11 @@ fun MeditationDetailScreen(
 ) {
     val hasAudio = meditation.audio != null
     val colors = SerinTheme.colors
+    // Kısa ekranlarda küre küçülür, boşluklar daralır; oynat düğmesi ilk ekranda kalır.
+    val screenHeight = LocalConfiguration.current.screenHeightDp
+    val compact = screenHeight < 720
+    val orbSize = (screenHeight - 520).coerceIn(180, 300).dp
+    val gap = if (compact) 0.6f else 1f
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
@@ -69,11 +76,11 @@ fun MeditationDetailScreen(
             .padding(bottom = contentBottomPadding()),
     ) {
         SerinHeader()
-        Spacer(Modifier.height(40.dp))
-        BreathingGlow(isPlaying = isPlaying, size = 300.dp) {
-            MoonOrb(meditation = meditation, progress = session.progress)
+        Spacer(Modifier.height((40 * gap).dp))
+        BreathingGlow(isPlaying = isPlaying, size = orbSize) {
+            MoonOrb(meditation = meditation, progress = session.progress, orbSize = orbSize)
         }
-        Spacer(Modifier.height(36.dp))
+        Spacer(Modifier.height((36 * gap).dp))
         Text(
             text = meditation.title,
             style = SerinType.DetailTitle,
@@ -86,9 +93,9 @@ fun MeditationDetailScreen(
             text = formatDuration(session.remainingMs),
             style = SerinType.SessionClock.copy(color = colors.textMuted),
         )
-        Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height((28 * gap).dp))
         SessionLengthPicker(selected = session.lengthMinutes, onSelect = onLengthSelect)
-        Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height((28 * gap).dp))
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -110,9 +117,9 @@ fun MeditationDetailScreen(
 
 /** Meditasyon görseli yuvarlak bir ay gibi durur; çevresindeki halka seansın ilerlemesini gösterir. */
 @Composable
-private fun MoonOrb(meditation: Meditation, progress: Float) {
+private fun MoonOrb(meditation: Meditation, progress: Float, orbSize: Dp) {
     val colors = SerinTheme.colors
-    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(300.dp)) {
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(orbSize)) {
         Canvas(Modifier.fillMaxSize()) {
             val stroke = 3.dp.toPx()
             val inset = stroke / 2
@@ -129,7 +136,7 @@ private fun MoonOrb(meditation: Meditation, progress: Float) {
             url = meditation.image,
             fallback = bundledImage(meditation.id),
             modifier = Modifier
-                .size(264.dp)
+                .size(orbSize - 36.dp)
                 .clip(CircleShape),
         )
     }
