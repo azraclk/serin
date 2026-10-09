@@ -179,6 +179,12 @@ fun SerinApp(
 }
 
 private fun NavHostController.navigateToTab(tab: SerinTab) {
+    // Detay ekranları sekmenin kayıtlı durumuna girmesin: aksi halde sekmeye dönünce detay geri yüklenir
+    // ve kendi sekmesine dokunmak ekranı değiştirmez. Önce kök ekrana dönülür.
+    while (currentDestination?.route.let { it == Routes.MEDITATION_DETAIL || it == Routes.BLOG_POST }) {
+        if (!popBackStack()) break
+    }
+    if (currentDestination?.route == tab.route) return
     navigate(tab.route) {
         popUpTo(Routes.HOME) { saveState = true }
         launchSingleTop = true
