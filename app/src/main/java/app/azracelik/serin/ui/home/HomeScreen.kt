@@ -77,7 +77,6 @@ import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.scaledByFont
 import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.components.serinTextShadow
-import app.azracelik.serin.ui.theme.Fraunces
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
 import java.time.LocalTime
@@ -293,7 +292,7 @@ private fun MeditationChip(meditation: Meditation, onClick: () -> Unit) {
     ImageCard(meditation.image, meditation.id, onClick, Modifier.size(width = 112.dp, height = 140.dp)) {
         FitText(
             text = meditation.label,
-            style = SerinType.Caption.copy(fontSize = 15.sp, textAlign = TextAlign.Center, shadow = serinTextShadow()),
+            style = SerinType.Caption.copy(textAlign = TextAlign.Center, shadow = serinTextShadow()),
             modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth().padding(top = 8.dp, start = 6.dp, end = 6.dp),
         )
     }
@@ -341,7 +340,7 @@ private fun Hero(greeting: String) {
             Spacer(Modifier.height(8.dp))
             Text(
                 text = stringResource(R.string.home_hero_line),
-                style = SerinType.Caption.copy(fontSize = 15.sp, color = colors.textMuted),
+                style = SerinType.Caption.copy(fontSize = 16.sp, color = colors.textMuted),
                 modifier = Modifier.padding(horizontal = ScreenPadding).widthIn(max = 280.dp.scaledByFont()),
             )
         }
