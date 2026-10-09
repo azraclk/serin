@@ -8,8 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +44,6 @@ import app.azracelik.serin.ui.splash.SplashScreen
 import app.azracelik.serin.ui.theme.SerinTheme
 
 private object Routes {
-    const val SPLASH = "splash"
     const val HOME = "home"
     const val MEDITATION = "meditation"
     const val MEDITATION_DETAIL = "meditation/{id}"
@@ -70,7 +71,10 @@ fun SerinApp(
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val route = backStackEntry?.destination?.route
-    val selectedTab = when (route) {
+    // Splash, gezinme grafiğinin dışında ana ekranın üstünde çizilir: böylece sekme çubuğu ve geçiş
+    // animasyonu splash kapanmadan görünmez.
+    var splashVisible by rememberSaveable { mutableStateOf(true) }
+    val selectedTab = if (splashVisible) null else when (route) {
         Routes.HOME -> SerinTab.Home
         Routes.MEDITATION, Routes.MEDITATION_DETAIL -> SerinTab.Meditation
         Routes.BLOG, Routes.BLOG_POST -> SerinTab.Blog
@@ -85,14 +89,7 @@ fun SerinApp(
 
     Box(Modifier.fillMaxSize().background(SerinTheme.colors.background)) {
         CompositionLocalProvider(LocalMiniPlayerInset provides if (showMiniPlayer) MiniPlayerInset else 0.dp) {
-            NavHost(navController, startDestination = Routes.SPLASH) {
-                composable(Routes.SPLASH) {
-                    SplashScreen(onFinished = {
-                        navController.navigate(Routes.HOME) {
-                            popUpTo(Routes.SPLASH) { inclusive = true }
-                        }
-                    })
-                }
+            NavHost(navController, startDestination = Routes.HOME) {
                 composable(Routes.HOME) {
                     val lastId by playerViewModel.lastMeditationId.collectAsStateWithLifecycle()
                     HomeScreen(
@@ -174,6 +171,10 @@ fun SerinApp(
                 onSelect = { navController.navigateToTab(it) },
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
+        }
+
+        if (splashVisible) {
+            SplashScreen(onFinished = { splashVisible = false })
         }
     }
 }
