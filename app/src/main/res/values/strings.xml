@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Serin</string>
     <string name="logo">serin</string>
+    <string name="theme_to_light">Açık temaya geç</string>
+    <string name="theme_to_dark">Gece temasına geç</string>
 
     <!-- Splash -->
     <string name="splash_slogan">Taze Bir

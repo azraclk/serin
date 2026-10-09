@@ -1,6 +1,24 @@
 package app.azracelik.serin.ui.components
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathOperation
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.semantics.Role
+import app.azracelik.serin.ui.theme.LocalThemeToggle
+import app.azracelik.serin.ui.theme.SerinTheme
+import app.azracelik.serin.ui.theme.ThemeToggle
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -65,16 +83,57 @@ fun FitText(text: String, style: TextStyle, modifier: Modifier = Modifier) {
     )
 }
 
-/** Tüm ekranların üstündeki "serin" yazısı; durum çubuğunun altında 40dp yer kaplar. */
+/**
+ * Tüm ekranların üstündeki "serin" yazısı; durum çubuğunun altında 40dp yer kaplar.
+ * Sağ uçta gece/gündüz düğmesi bulunur (splash'te [showThemeToggle] kapalıdır).
+ */
 @Composable
-fun SerinHeader(modifier: Modifier = Modifier) {
-    Text(
-        text = stringResource(R.string.logo),
-        style = SerinType.Logo,
-        textAlign = TextAlign.Center,
-        modifier = modifier
+fun SerinHeader(modifier: Modifier = Modifier, showThemeToggle: Boolean = true) {
+    Box(
+        modifier
             .fillMaxWidth()
             .statusBarsPadding()
             .padding(top = 11.dp),
-    )
+    ) {
+        Text(
+            text = stringResource(R.string.logo),
+            style = SerinType.Logo,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        val toggle = LocalThemeToggle.current
+        if (showThemeToggle && toggle != null) {
+            ThemeToggleButton(toggle, Modifier.align(Alignment.CenterEnd).padding(end = 8.dp))
+        }
+    }
+}
+
+/** Gece temasında güneş, açık temada hilal çizer; dokununca öbür temaya geçer. */
+@Composable
+private fun ThemeToggleButton(toggle: ThemeToggle, modifier: Modifier = Modifier) {
+    val color = SerinTheme.colors.text
+    Canvas(
+        modifier
+            .requiredSize(48.dp)
+            .clip(CircleShape)
+            .clickable(
+                role = Role.Button,
+                onClickLabel = stringResource(if (toggle.isDark) R.string.theme_to_light else R.string.theme_to_dark),
+                onClick = toggle.onToggle,
+            ),
+    ) {
+        val c = center
+        if (toggle.isDark) {
+            drawCircle(color, 5.dp.toPx(), c)
+            for (i in 0 until 8) {
+                val a = i * PI.toFloat() / 4
+                val dir = Offset(cos(a), sin(a))
+                drawLine(color, c + dir * 8.dp.toPx(), c + dir * 11.dp.toPx(), 1.8.dp.toPx(), StrokeCap.Round)
+            }
+        } else {
+            val full = Path().apply { addOval(Rect(c, 9.dp.toPx())) }
+            val cut = Path().apply { addOval(Rect(c + Offset((-4).dp.toPx(), (-3).dp.toPx()), 8.dp.toPx())) }
+            drawPath(Path.combine(PathOperation.Difference, full, cut), color)
+        }
+    }
 }

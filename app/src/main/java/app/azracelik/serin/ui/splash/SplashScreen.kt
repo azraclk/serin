@@ -37,7 +37,7 @@ fun SplashScreen(onFinished: () -> Unit, modifier: Modifier = Modifier) {
     }
 
     Box(modifier.fillMaxSize().background(SerinTheme.colors.background)) {
-        SerinHeader()
+        SerinHeader(showThemeToggle = false)
         Text(
             text = stringResource(R.string.splash_slogan),
             style = SerinType.Splash,
