@@ -23,7 +23,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.azracelik.serin.R
 import app.azracelik.serin.data.BlogPost
@@ -38,6 +37,9 @@ import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.markdown.Markdown
 import app.azracelik.serin.ui.markdown.MdBlock
 import app.azracelik.serin.ui.markdown.parseMarkdown
+import app.azracelik.serin.ui.components.AdaptivePreviews
+import app.azracelik.serin.ui.components.PreviewWindow
+import app.azracelik.serin.ui.components.SerinTab
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
 
@@ -142,10 +144,10 @@ private fun Message(text: String, action: @Composable () -> Unit = {}) {
     }
 }
 
-@Preview(widthDp = 393, heightDp = 852)
+@AdaptivePreviews
 @Composable
 private fun BlogPostScreenPreview() {
-    SerinTheme {
+    PreviewWindow(SerinTab.Blog) {
         BlogPostScreen(
             post = PreviewContent.blogPosts[0],
             body = PostBodyState.Loaded(

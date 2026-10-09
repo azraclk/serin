@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.azracelik.serin.data.Meditation
 import app.azracelik.serin.ui.adaptive.LocalWindowSize
@@ -24,6 +23,9 @@ import app.azracelik.serin.ui.components.ImageCard
 import app.azracelik.serin.ui.components.SerinHeader
 import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.serinTextShadow
+import app.azracelik.serin.ui.components.AdaptivePreviews
+import app.azracelik.serin.ui.components.PreviewWindow
+import app.azracelik.serin.ui.components.SerinTab
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
 
@@ -78,8 +80,8 @@ private fun MeditationCard(meditation: Meditation, index: Int, onClick: () -> Un
     }
 }
 
-@Preview(widthDp = 393, heightDp = 852)
+@AdaptivePreviews
 @Composable
 private fun MeditationScreenPreview() {
-    SerinTheme { MeditationScreen(PreviewContent.meditations, onMeditationClick = {}) }
+    PreviewWindow(SerinTab.Meditation) { MeditationScreen(PreviewContent.meditations, onMeditationClick = {}) }
 }

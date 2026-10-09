@@ -20,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.azracelik.serin.data.BlogPost
 import app.azracelik.serin.ui.adaptive.LocalWindowSize
@@ -36,6 +35,9 @@ import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.scaledByFont
 import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.components.serinTextShadow
+import app.azracelik.serin.ui.components.AdaptivePreviews
+import app.azracelik.serin.ui.components.PreviewWindow
+import app.azracelik.serin.ui.components.SerinTab
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
 
@@ -66,8 +68,8 @@ fun BlogScreen(
     }
 }
 
-@Preview(widthDp = 393, heightDp = 852)
+@AdaptivePreviews
 @Composable
 private fun BlogScreenPreview() {
-    SerinTheme { BlogScreen(PreviewContent.blogPosts, onPostClick = {}) }
+    PreviewWindow(SerinTab.Blog) { BlogScreen(PreviewContent.blogPosts, onPostClick = {}) }
 }
