@@ -54,6 +54,7 @@ object SerinType {
     val NavLabel = Base.copy(fontSize = 12.sp, lineHeight = (40f / 12f).em, letterSpacing = 0.05.em)
 
     // Blog yazısı detay ekranı; Figma'da yok, mevcut stile göre tasarlandı.
+    val PostRowTitle = Heading.copy(fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.Normal)
     val PostTitle = Heading.copy(fontSize = 24.sp, lineHeight = 34.sp, textAlign = TextAlign.Center)
     val PostBody = Base.copy(fontSize = 16.sp, lineHeight = 26.sp)
     val PostHeading = Heading.copy(

@@ -71,6 +71,7 @@ import app.azracelik.serin.ui.components.CardBorderWidth
 import app.azracelik.serin.ui.components.CardShape
 import app.azracelik.serin.ui.components.FitText
 import app.azracelik.serin.ui.components.RemoteImage
+import app.azracelik.serin.ui.components.PostRow
 import app.azracelik.serin.ui.components.SerinHeader
 import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.scaledByFont
@@ -149,8 +150,8 @@ fun HomeScreen(
         if (blogPosts.isNotEmpty()) {
             Spacer(Modifier.height(SectionGap))
             SectionTitle(R.string.home_read)
-            HorizontalList {
-                blogPosts.forEach { PostCard(it, onClick = { onPostClick(it) }) }
+            Column(Modifier.padding(horizontal = ScreenPadding)) {
+                blogPosts.take(3).forEach { PostRow(it, onClick = { onPostClick(it) }) }
             }
         }
     }
@@ -294,19 +295,6 @@ private fun MeditationChip(meditation: Meditation, onClick: () -> Unit) {
             text = meditation.label,
             style = SerinType.Caption.copy(fontSize = 15.sp, textAlign = TextAlign.Center, shadow = serinTextShadow()),
             modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth().padding(top = 8.dp, start = 6.dp, end = 6.dp),
-        )
-    }
-}
-
-@Composable
-private fun PostCard(post: BlogPost, onClick: () -> Unit) {
-    ImageCard(post.image, post.id, onClick, Modifier.width(232.dp).heightIn(min = 140.dp)) {
-        Text(
-            text = post.title,
-            style = SerinType.HomeCard.copy(shadow = serinTextShadow()),
-            maxLines = 4,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.align(Alignment.Center).padding(horizontal = 14.dp, vertical = 10.dp),
         )
     }
 }
