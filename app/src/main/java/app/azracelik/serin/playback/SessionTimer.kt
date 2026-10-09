@@ -61,7 +61,10 @@ class SessionTimer(private val player: Player, private val scope: CoroutineScope
             return
         }
         player.volume = minOf(1f, elapsedMs.toFloat() / FadeInMillis, (lengthMs - elapsedMs).toFloat() / FadeOutMillis)
-        MeditationSession.setElapsed(elapsedMs)
+        // Ses seviyesi sık güncellenir ama ekran saniyede bir değişir; gereksiz yeniden çizimi önlemek için
+        // süre saniyeye yuvarlanarak yayınlanır.
+        val wholeSecondMs = elapsedMs / 1000 * 1000
+        if (wholeSecondMs != MeditationSession.state.value.elapsedMs) MeditationSession.setElapsed(wholeSecondMs)
     }
 
     private fun reset() {
