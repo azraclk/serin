@@ -8,10 +8,21 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathOperation
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.semantics.Role
 import app.azracelik.serin.ui.theme.LocalThemeToggle
 import app.azracelik.serin.ui.theme.SerinTheme
@@ -85,7 +96,7 @@ fun FitText(text: String, style: TextStyle, modifier: Modifier = Modifier) {
 
 /**
  * Tüm ekranların üstündeki "serin" yazısı; durum çubuğunun altında 40dp yer kaplar.
- * Sağ uçta gece/gündüz düğmesi bulunur (splash'te [showThemeToggle] kapalıdır).
+ * Sol uçta gece/gündüz düğmesi bulunur (splash'te [showThemeToggle] kapalıdır).
  */
 @Composable
 fun SerinHeader(modifier: Modifier = Modifier, showThemeToggle: Boolean = true) {
@@ -103,15 +114,24 @@ fun SerinHeader(modifier: Modifier = Modifier, showThemeToggle: Boolean = true) 
         )
         val toggle = LocalThemeToggle.current
         if (showThemeToggle && toggle != null) {
-            ThemeToggleButton(toggle, Modifier.align(Alignment.CenterEnd).padding(end = 8.dp))
+            ThemeToggleButton(toggle, Modifier.align(Alignment.CenterStart).padding(start = 14.dp))
         }
     }
 }
 
-/** Gece temasında güneş, açık temada hilal çizer; dokununca öbür temaya geçer. */
+/**
+ * "Ufuk" ikonu: gündüz ufuktaki yarım güneş, gece aynı çizgiden yükselen hilal.
+ * Tema değişince önce güneş ufka batar, sonra hilal çizginin ardından yükselir (ya da tersi).
+ */
 @Composable
 private fun ThemeToggleButton(toggle: ThemeToggle, modifier: Modifier = Modifier) {
     val color = SerinTheme.colors.text
+    val night by animateFloatAsState(
+        targetValue = if (toggle.isDark) 1f else 0f,
+        animationSpec = tween(durationMillis = 800, easing = LinearEasing),
+        label = "themeToggleHorizon",
+    )
+    val moon = remember { PathParser().parsePathString(HorizonMoonPath).toPath() }
     Canvas(
         modifier
             .requiredSize(48.dp)
@@ -122,18 +142,50 @@ private fun ThemeToggleButton(toggle: ThemeToggle, modifier: Modifier = Modifier
                 onClick = toggle.onToggle,
             ),
     ) {
-        val c = center
-        if (toggle.isDark) {
-            drawCircle(color, 5.dp.toPx(), c)
-            for (i in 0 until 8) {
-                val a = i * PI.toFloat() / 4
-                val dir = Offset(cos(a), sin(a))
-                drawLine(color, c + dir * 8.dp.toPx(), c + dir * 11.dp.toPx(), 1.8.dp.toPx(), StrokeCap.Round)
+        // Yarı yarıya bölünmüş süre: ilk yarıda güneş batar, ikincide hilal doğar.
+        val sink = FastOutSlowInEasing.transform((night / 0.5f).coerceIn(0f, 1f))
+        val rise = FastOutSlowInEasing.transform(((night - 0.5f) / 0.5f).coerceIn(0f, 1f))
+        val stroke = Stroke(HorizonStroke, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        // Çizim 24x24'lük bir birim alanında yapılır; 1 birim = 1 dp.
+        translate(center.x - 12.dp.toPx(), center.y - 12.dp.toPx()) {
+            scale(1.dp.toPx(), 1.dp.toPx(), Offset.Zero) {
+                // Ufuk çizgisinin altına inen her şey kesilir; güneş ve ay çizginin ardından geçer.
+                clipRect(0f, 0f, 24f, HorizonY) {
+                    translate(0f, SunDrop * sink) {
+                        drawArc(color, 180f, 180f, false, Offset(7f, HorizonY - 5f), Size(10f, 10f), style = stroke)
+                        val rayColor = color.copy(alpha = 1f - sink)
+                        for (deg in SunRayAngles) {
+                            val a = deg * PI.toFloat() / 180f
+                            val dir = Offset(cos(a), sin(a))
+                            val c = Offset(12f, HorizonY)
+                            drawLine(rayColor, c + dir * 7.5f, c + dir * 9.8f, HorizonStroke, StrokeCap.Round)
+                        }
+                    }
+                    translate(0f, MoonDrop * (1f - rise)) {
+                        withTransform({
+                            translate(6.6f, 3.6f)
+                            scale(MoonScale, MoonScale, Offset.Zero)
+                        }) {
+                            drawPath(
+                                moon,
+                                color.copy(alpha = (rise * 2f).coerceAtMost(1f)),
+                                style = Stroke(HorizonStroke / MoonScale, cap = StrokeCap.Round, join = StrokeJoin.Round),
+                            )
+                        }
+                    }
+                }
+                drawLine(color, Offset(2.5f, HorizonY), Offset(21.5f, HorizonY), HorizonStroke, StrokeCap.Round)
+                drawLine(color, Offset(7f, 20.6f), Offset(17f, 20.6f), HorizonStroke, StrokeCap.Round)
             }
-        } else {
-            val full = Path().apply { addOval(Rect(c, 9.dp.toPx())) }
-            val cut = Path().apply { addOval(Rect(c + Offset((-4).dp.toPx(), (-3).dp.toPx()), 8.dp.toPx())) }
-            drawPath(Path.combine(PathOperation.Difference, full, cut), color)
         }
     }
 }
+
+private const val HorizonStroke = 1.8f
+private const val HorizonY = 17f
+/** Güneşin ufkun ardına tamamen gizlenmesi için inmesi gereken mesafe (ışınlar dahil). */
+private const val SunDrop = 11f
+private const val MoonDrop = 12f
+private const val MoonScale = 0.55f
+private val SunRayAngles = floatArrayOf(-90f, -50f, -130f, -15f, -165f)
+private const val HorizonMoonPath = "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
