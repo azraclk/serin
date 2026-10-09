@@ -46,7 +46,7 @@ val LightColors = SerinColors(
     accentSoft = SerinPurple.copy(alpha = 0.25f),
     overlay = SerinPurple.copy(alpha = 0.2f),
     bar = SerinPurple,
-    onBar = Color.Black,
+    onBar = Color.White,
     track = Color.Black,
     isDark = false,
 )

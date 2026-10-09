@@ -3,8 +3,10 @@ package app.azracelik.serin.ui.components
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -19,10 +21,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.innerShadow
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
@@ -50,8 +55,13 @@ enum class SerinTab(
 private const val DesignWidth = 393f
 private val BumpHeight = 22.dp
 private val SlabHeight = 80.dp
-private val SelectionSize = 75.dp
+private val DiscSize = 64.dp
+private val DiscRing = 5.dp
 private val ItemWidth = 116.dp
+private val IconSize = 24.dp
+/** İkonun menü bileşeninin tepesine göre konumu: menüde dururken ve disk içinde ortalıyken. */
+private val RestingIconTop = BumpHeight + 19.dp
+private val RaisedIconTop = (DiscSize - IconSize) / 2
 
 /** Alt menünün ekranın altından kapladığı yükseklik; kaydırılan içerik bu kadar boşluk bırakmalı. */
 @Composable
@@ -68,14 +78,6 @@ fun SerinBottomBar(
     BoxWithConstraints(modifier.fillMaxWidth().height(bottomBarHeight())) {
         fun centerOf(tab: SerinTab) = maxWidth * (tab.centerX / DesignWidth)
 
-        // Seçim dairesi menünün arkasında kalır, yalnızca üst kısmı taşar.
-        val selectionX by animateDpAsState(centerOf(selected) - SelectionSize / 2, label = "selection")
-        Image(
-            painter = painterResource(R.drawable.nav_selection),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(colors.bar),
-            modifier = Modifier.offset(x = selectionX).size(SelectionSize),
-        )
         Box(
             Modifier
                 .offset(y = BumpHeight)
@@ -84,33 +86,46 @@ fun SerinBottomBar(
                 .background(colors.bar)
                 .innerShadow(RectangleShape, SerinDropShadow),
         )
+        // Seçim diski menünün üstüne çıkar; zemin renginde halka, menüde oyuk izlenimi verir.
+        val discX by animateDpAsState(centerOf(selected) - DiscSize / 2, label = "selection")
+        Box(
+            Modifier
+                .offset(x = discX)
+                .size(DiscSize)
+                .clip(CircleShape)
+                .background(colors.bar)
+                .border(DiscRing, colors.background, CircleShape),
+        )
         SerinTab.entries.forEach { tab ->
             val isSelected = tab == selected
+            // 0 = menüde duruyor, 1 = diskin içinde yükselmiş.
+            val lift by animateFloatAsState(if (isSelected) 1f else 0f, label = "lift")
+            val iconTop = RestingIconTop + (RaisedIconTop - RestingIconTop) * lift
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .offset(x = centerOf(tab) - ItemWidth / 2, y = BumpHeight)
+                    .offset(x = centerOf(tab) - ItemWidth / 2)
                     .width(ItemWidth)
-                    .height(SlabHeight)
+                    .height(BumpHeight + SlabHeight)
                     .selectable(selected = isSelected, role = Role.Tab, onClick = { onSelect(tab) }),
             ) {
-                Spacer(Modifier.height(19.dp))
+                Spacer(Modifier.height(iconTop))
                 Image(
                     painter = painterResource(tab.icon),
                     contentDescription = null,
                     colorFilter = ColorFilter.tint(colors.onBar),
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(IconSize).alpha(0.7f + 0.3f * lift),
                 )
+                // Etiket sabit yükseklikte kalır: ikon yükselirken altındaki boşluk büyür.
+                Spacer(Modifier.height(RestingIconTop - iconTop + 2.dp))
                 FitText(
                     text = stringResource(tab.label),
                     style = SerinType.NavLabel.copy(
-                        color = colors.onBar,
+                        color = colors.onBar.copy(alpha = if (isSelected) 1f else 0.75f),
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                     ),
                     // Sığma hesabında yalnızca genişlik sayılsın; yükseklik menünün dışına taşabilir.
-                    modifier = Modifier
-                        .offset(y = 2.dp)
-                        .wrapContentHeight(unbounded = true),
+                    modifier = Modifier.wrapContentHeight(unbounded = true),
                 )
             }
         }

@@ -1,5 +1,11 @@
 package app.azracelik.serin.ui.home
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,9 +31,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -83,26 +92,38 @@ fun HomeScreen(
                 .clickable(onClick = onBannerClick),
         )
         Spacer(Modifier.height(49.dp))
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(17.dp),
-            modifier = Modifier
-                .padding(horizontal = 28.dp)
-                // İki kart, uzun olanın yüksekliğini alır.
-                .height(IntrinsicSize.Min),
-        ) {
+        // Büyük yazıda iki dar kart kelimeleri tireyle bölüyor; kartlar alt alta dizilir.
+        val stacked = LocalDensity.current.fontScale > StackCardsFontScale
+        val cardsModifier = Modifier.padding(horizontal = 28.dp)
+        val cards: @Composable (Modifier) -> Unit = { cardModifier ->
             featuredPosts.forEach { post ->
-                PostCard(post, onClick = { onPostClick(post) }, modifier = Modifier.weight(1f).fillMaxHeight())
+                PostCard(post, onClick = { onPostClick(post) }, modifier = cardModifier)
+            }
+        }
+        if (stacked) {
+            Column(verticalArrangement = Arrangement.spacedBy(17.dp), modifier = cardsModifier) {
+                cards(Modifier.fillMaxWidth())
+            }
+        } else {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(17.dp),
+                // İki kart, uzun olanın yüksekliğini alır.
+                modifier = cardsModifier.height(IntrinsicSize.Min),
+            ) {
+                cards(Modifier.weight(1f).fillMaxHeight())
             }
         }
     }
 }
 
+private const val StackCardsFontScale = 1.3f
+
 /** Üst kısımdaki slogan ve arkasındaki üst üste binen mor daireler. */
 @Composable
 private fun Hero() {
     Box(Modifier.fillMaxWidth()) {
-        SloganCircle(x = (-54).dp, y = (-137).dp)
-        SloganCircle(x = (-22).dp, y = (-178).dp)
+        SloganCircle(x = (-54).dp, y = (-137).dp, drift = CircleDrifts[0])
+        SloganCircle(x = (-22).dp, y = (-178).dp, drift = CircleDrifts[1])
         Column {
             SerinHeader()
             Spacer(Modifier.height(32.dp))
@@ -128,16 +149,34 @@ private fun Hero() {
             )
         }
         // Üçüncü daire Figma'da metnin üzerinde duruyor.
-        SloganCircle(x = (-133).dp, y = (-210).dp)
+        SloganCircle(x = (-133).dp, y = (-210).dp, drift = CircleDrifts[2])
     }
 }
+
+/** Dairenin yavaş süzülmesi: her daire farklı sürede ve yönde gidip gelir, hiçbiri senkron olmaz. */
+private class CircleDrift(val periodMillis: Int, val dx: Dp, val dy: Dp)
+
+private val CircleDrifts = listOf(
+    CircleDrift(periodMillis = 7000, dx = 14.dp, dy = (-10).dp),
+    CircleDrift(periodMillis = 9000, dx = (-12).dp, dy = 12.dp),
+    CircleDrift(periodMillis = 11000, dx = 10.dp, dy = 14.dp),
+)
 
 /**
  * 500dp çaplı, gölgeli daire. Görsel gölgeyle birlikte 556dp; daire görselin içinde (28, 12) konumunda.
  * [x], [y] dairenin ekranın sol üstüne göre konumu (durum çubuğunun altından itibaren).
  */
 @Composable
-private fun BoxScope.SloganCircle(x: Dp, y: Dp) {
+private fun BoxScope.SloganCircle(x: Dp, y: Dp, drift: CircleDrift) {
+    val progress by rememberInfiniteTransition(label = "circleDrift").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(drift.periodMillis, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "circleDrift",
+    )
     Image(
         painter = painterResource(R.drawable.slogan_circle),
         contentDescription = null,
@@ -145,7 +184,12 @@ private fun BoxScope.SloganCircle(x: Dp, y: Dp) {
             .matchParentSize()
             .wrapContentSize(Alignment.TopStart, unbounded = true)
             .offset(x = x - 28.dp, y = y - 12.dp)
-            .requiredSize(556.dp),
+            .requiredSize(556.dp)
+            // Ölçü/konum değişmez, yalnızca çizim katmanı kayar; her karede yeniden düzen yapılmaz.
+            .graphicsLayer {
+                translationX = drift.dx.toPx() * progress
+                translationY = drift.dy.toPx() * progress
+            },
     )
 }
 
