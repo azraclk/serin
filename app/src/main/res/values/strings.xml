@@ -3,33 +3,35 @@
     <string name="logo">serin</string>
 
     <!-- Splash -->
-    <string name="splash_slogan">A Breath\nof\nFresh Peace.</string>
+    <string name="splash_slogan">Taze Bir
+Huzur
+Nefesi.</string>
 
     <!-- Home -->
-    <string name="home_hero_line">Slow down. A quiet moment is waiting for you.</string>
+    <string name="home_hero_line">Yavaşla. Seni sakin bir an bekliyor.</string>
 
-    <string name="greeting_morning">Good morning</string>
-    <string name="greeting_afternoon">Good afternoon</string>
-    <string name="greeting_evening">Good evening</string>
-    <string name="greeting_night">Good night</string>
-    <string name="home_pick_label">Today\'s pick</string>
-    <string name="home_start">Start</string>
-    <string name="home_resume">Pick up where you left off</string>
-    <string name="home_explore">Explore</string>
-    <string name="home_read">Worth a read</string>
+    <string name="greeting_morning">Günaydın</string>
+    <string name="greeting_afternoon">İyi günler</string>
+    <string name="greeting_evening">İyi akşamlar</string>
+    <string name="greeting_night">İyi geceler</string>
+    <string name="home_pick_label">Bugünün seçimi</string>
+    <string name="home_start">Başla</string>
+    <string name="home_resume">Kaldığın yerden devam et</string>
+    <string name="home_explore">Keşfet</string>
+    <string name="home_read">Okumaya değer</string>
 
     <!-- Alt menü -->
-    <string name="nav_home">home</string>
-    <string name="nav_meditation">meditation</string>
+    <string name="nav_home">ana sayfa</string>
+    <string name="nav_meditation">meditasyon</string>
     <string name="nav_blog">blog</string>
 
-    <string name="play">Play</string>
-    <string name="pause">Pause</string>
-    <string name="session_minutes">%d min</string>
-    <string name="close">Close</string>
+    <string name="play">Oynat</string>
+    <string name="pause">Duraklat</string>
+    <string name="session_minutes">%d dk</string>
+    <string name="close">Kapat</string>
 
     <!-- Blog yazısı -->
-    <string name="post_failed">Couldn\'t load this post. Check your connection and try again.</string>
-    <string name="try_again">Try again</string>
-    <string name="post_coming_soon">This post is coming soon.</string>
+    <string name="post_failed">Yazı yüklenemedi. Bağlantını kontrol edip tekrar dene.</string>
+    <string name="try_again">Tekrar dene</string>
+    <string name="post_coming_soon">Bu yazı yakında burada olacak.</string>
 </resources>
