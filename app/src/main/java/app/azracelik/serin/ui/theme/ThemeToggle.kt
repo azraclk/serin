@@ -9,7 +9,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 private const val PrefsName = "serin_theme"
 private const val KeyDark = "dark"
 
-/** Kullanıcının seçtiği tema; seçim yapılmadıysa [override] null olur ve sistem ayarı izlenir. */
+/** Kullanıcının seçtiği tema; seçim yapılmadıysa [override] null olur ve varsayılan koyu tema kullanılır. */
 class ThemePreference(context: Context) {
     private val prefs = context.getSharedPreferences(PrefsName, Context.MODE_PRIVATE)
 

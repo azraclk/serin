@@ -3,7 +3,7 @@
 
     <!-- Android 12+ sistem splash'i kapatılamaz; ikonu şeffaf, zemini uygulama zemini yapılır,
          böylece yalnızca sloganlı splash görünür. -->
-    <style name="Theme.Serin" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.Serin" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
         <item name="android:windowSplashScreenBackground">@color/window_background</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_system_empty</item>

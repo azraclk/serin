@@ -1,6 +1,5 @@
 package app.azracelik.serin.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -9,9 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 
-/** Telefonun karanlık mod ayarını izler; gece teması [DarkColors]. */
+/** Varsayılan tema koyudur; gece teması [DarkColors]. */
 @Composable
-fun SerinTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+fun SerinTheme(darkTheme: Boolean = true, content: @Composable () -> Unit) {
     val colors = if (darkTheme) DarkColors else LightColors
     val scheme = (if (darkTheme) darkColorScheme() else lightColorScheme()).copy(
         primary = colors.accent,

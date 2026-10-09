@@ -6,7 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import app.azracelik.serin.ui.theme.LocalThemeToggle
@@ -19,7 +18,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val themePreference = ThemePreference(applicationContext)
         setContent {
-            val dark = themePreference.override ?: isSystemInDarkTheme()
+            // Kullanıcı seçim yapana kadar uygulama koyu temada açılır; sistem temasına bakılmaz.
+            val dark = themePreference.override ?: true
             // Sistem çubuklarının ikonları temaya göre koyu (açık tema) ya da açık (gece teması) olur.
             DisposableEffect(dark) {
                 enableEdgeToEdge(
