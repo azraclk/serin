@@ -23,9 +23,9 @@ Nefesi.</string>
     <string name="home_read">Okumaya değer</string>
 
     <!-- Alt menü -->
-    <string name="nav_home">ana sayfa</string>
-    <string name="nav_meditation">meditasyon</string>
-    <string name="nav_blog">blog</string>
+    <string name="nav_home">Ana Sayfa</string>
+    <string name="nav_meditation">Meditasyon</string>
+    <string name="nav_blog">Blog</string>
 
     <string name="play">Oynat</string>
     <string name="pause">Duraklat</string>

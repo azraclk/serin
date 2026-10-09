@@ -79,7 +79,7 @@ class NavigationTest {
         }
     }
 
-    private fun awaitHome() = waitFor("ana sayfa") { onHome }
+    private fun awaitHome() = waitFor("Ana Sayfa") { onHome }
 
     private fun pressBack() {
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
@@ -102,7 +102,7 @@ class NavigationTest {
     }
 
     private fun openDetailFromList() {
-        tab("meditasyon").performClick()
+        tab("Meditasyon").performClick()
         waitFor("meditasyon listesi") { onMeditationList }
         rule.onAllNodesWithText("farkındalık").onFirst().performClick()
         waitFor("meditasyon detayı") { onDetail }
@@ -111,21 +111,21 @@ class NavigationTest {
     @Test
     fun detailFromExplore_homeTabReturnsHome() {
         openDetailFromHome()
-        tab("ana sayfa").performClick()
-        waitFor("ana sayfa") { onHome }
+        tab("Ana Sayfa").performClick()
+        waitFor("Ana Sayfa") { onHome }
     }
 
     @Test
     fun detailFromExplore_meditationTabShowsList() {
         openDetailFromHome()
-        tab("meditasyon").performClick()
+        tab("Meditasyon").performClick()
         waitFor("meditasyon listesi") { onMeditationList }
     }
 
     @Test
     fun detailFromExplore_blogTabShowsBlog() {
         openDetailFromHome()
-        tab("blog").performClick()
+        tab("Blog").performClick()
         waitFor("blog listesi") { onBlogList }
     }
 
@@ -133,22 +133,22 @@ class NavigationTest {
     fun detailFromExplore_backReturnsHome() {
         openDetailFromHome()
         pressBack()
-        waitFor("ana sayfa") { onHome }
+        waitFor("Ana Sayfa") { onHome }
     }
 
     @Test
     fun detailFromList_homeTabReturnsHome() {
         awaitHome()
         openDetailFromList()
-        tab("ana sayfa").performClick()
-        waitFor("ana sayfa") { onHome }
+        tab("Ana Sayfa").performClick()
+        waitFor("Ana Sayfa") { onHome }
     }
 
     @Test
     fun detailFromList_meditationTabReturnsList() {
         awaitHome()
         openDetailFromList()
-        tab("meditasyon").performClick()
+        tab("Meditasyon").performClick()
         waitFor("meditasyon listesi") { onMeditationList }
     }
 
@@ -163,24 +163,24 @@ class NavigationTest {
     @Test
     fun homeAfterEveryTab_roundTrips() {
         awaitHome()
-        tab("meditasyon").performClick()
+        tab("Meditasyon").performClick()
         waitFor("meditasyon listesi") { onMeditationList }
-        tab("blog").performClick()
+        tab("Blog").performClick()
         waitFor("blog listesi") { onBlogList }
-        tab("ana sayfa").performClick()
-        waitFor("ana sayfa") { onHome }
+        tab("Ana Sayfa").performClick()
+        waitFor("Ana Sayfa") { onHome }
     }
 
     @Test
     fun blogPost_tabsAndBack() {
         awaitHome()
-        tab("blog").performClick()
+        tab("Blog").performClick()
         waitFor("blog listesi") { onBlogList }
         rule.onAllNodesWithText("Meditasyonun Tarihi: Geçmişten Bugüne").onFirst().performClick()
         waitFor("yazı") { onPost }
-        tab("ana sayfa").performClick()
-        waitFor("ana sayfa") { onHome }
-        tab("blog").performClick()
+        tab("Ana Sayfa").performClick()
+        waitFor("Ana Sayfa") { onHome }
+        tab("Blog").performClick()
         waitFor("blog listesi") { onBlogList }
     }
 
@@ -190,11 +190,11 @@ class NavigationTest {
         openHomePost()
         waitFor("yazı") { onPost }
         pressBack()
-        waitFor("ana sayfa") { onHome }
+        waitFor("Ana Sayfa") { onHome }
         openHomePost()
         waitFor("yazı") { onPost }
-        tab("ana sayfa").performClick()
-        waitFor("ana sayfa") { onHome }
+        tab("Ana Sayfa").performClick()
+        waitFor("Ana Sayfa") { onHome }
     }
 
     private val player get() = ViewModelProvider(rule.activity)[PlayerViewModel::class.java]
@@ -240,11 +240,11 @@ class NavigationTest {
         // Kendi detay ekranında mini player yok.
         assertTrue(!miniPlayerVisible())
 
-        tab("blog").performClick()
+        tab("Blog").performClick()
         waitFor("blog listesi") { onBlogList }
         waitFor("mini player (blog)") { miniPlayerVisible() }
 
-        tab("meditasyon").performClick()
+        tab("Meditasyon").performClick()
         waitFor("meditasyon listesi") { onMeditationList }
         waitFor("mini player (meditasyon)") { miniPlayerVisible() }
     }
@@ -263,12 +263,12 @@ class NavigationTest {
     fun session_otherMeditationDetail_keepsMiniPlayerAndTabsWork() {
         awaitHome()
         startSession()
-        tab("meditasyon").performClick()
+        tab("Meditasyon").performClick()
         waitFor("meditasyon listesi") { onMeditationList }
         rule.onAllNodesWithText("nefes").onFirst().performClick()
         waitFor("başka meditasyon detayı") { onDetail }
         waitFor("mini player") { miniPlayerVisible() }
-        tab("ana sayfa").performClick()
-        waitFor("ana sayfa") { onHome }
+        tab("Ana Sayfa").performClick()
+        waitFor("Ana Sayfa") { onHome }
     }
 }

@@ -90,7 +90,7 @@ class SettingsTest {
     @Test
     fun themeToggle_worksOnOtherTabs() {
         val start = currentLabel()
-        rule.onNode(hasContentDescription("meditasyon") and hasClickAction()).performClick()
+        rule.onNode(hasContentDescription("Meditasyon") and hasClickAction()).performClick()
         awaitLabel(start)
         click(start)
         awaitLabel(other(start))
@@ -131,7 +131,7 @@ class SettingsTest {
         val stored = context.getSharedPreferences("player", Context.MODE_PRIVATE).getInt("session_length_minutes", -1)
         assertEquals(20, stored)
 
-        rule.onNode(hasContentDescription("ana sayfa") and hasClickAction()).performClick()
+        rule.onNode(hasContentDescription("Ana Sayfa") and hasClickAction()).performClick()
         awaitHome()
         // Ana sayfadaki "Başla" kartı seçili süreyi gösterir.
         assertTrue(textExists("20 dk"))
