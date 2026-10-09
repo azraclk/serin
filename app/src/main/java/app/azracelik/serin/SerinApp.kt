@@ -1,11 +1,15 @@
 package app.azracelik.serin
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +46,9 @@ import app.azracelik.serin.ui.meditation.MeditationDetailScreen
 import app.azracelik.serin.ui.meditation.MeditationScreen
 import app.azracelik.serin.ui.splash.SplashScreen
 import app.azracelik.serin.ui.theme.SerinTheme
+import kotlinx.coroutines.delay
+
+private const val SplashFadeOutMillis = 300
 
 private object Routes {
     const val HOME = "home"
@@ -74,7 +81,15 @@ fun SerinApp(
     // Splash, gezinme grafiğinin dışında ana ekranın üstünde çizilir: böylece sekme çubuğu ve geçiş
     // animasyonu splash kapanmadan görünmez.
     var splashVisible by rememberSaveable { mutableStateOf(true) }
-    val selectedTab = if (splashVisible) null else when (route) {
+    // Sekme çubuğu, splash tamamen solduktan sonra gösterilir.
+    var splashGone by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(splashVisible) {
+        if (!splashVisible) {
+            delay(SplashFadeOutMillis.toLong())
+            splashGone = true
+        }
+    }
+    val selectedTab = if (!splashGone) null else when (route) {
         Routes.HOME -> SerinTab.Home
         Routes.MEDITATION, Routes.MEDITATION_DETAIL -> SerinTab.Meditation
         Routes.BLOG, Routes.BLOG_POST -> SerinTab.Blog
@@ -173,7 +188,10 @@ fun SerinApp(
             )
         }
 
-        if (splashVisible) {
+        AnimatedVisibility(
+            visible = splashVisible,
+            exit = fadeOut(tween(SplashFadeOutMillis)),
+        ) {
             SplashScreen(onFinished = { splashVisible = false })
         }
     }
