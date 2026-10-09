@@ -49,7 +49,7 @@ object SerinType {
     val CardLabel = Base.copy(fontSize = 20.sp, textAlign = TextAlign.Center)
     val HomeCard = Base.copy(fontSize = 16.sp, lineHeight = 20.sp, textAlign = TextAlign.Center, hyphens = Hyphens.Auto)
     val BlogTitle = Heading.copy(fontSize = 24.sp, lineHeight = 50.sp, textAlign = TextAlign.Center, hyphens = Hyphens.Auto)
-    val DetailTitle = Heading.copy(fontSize = 24.sp, letterSpacing = 6.sp, textAlign = TextAlign.Center)
+    val DetailTitle = Heading.copy(fontSize = 24.sp, letterSpacing = 2.sp, textAlign = TextAlign.Center)
     // Satır yüksekliği Figma'daki 40sp; yazı küçülünce (FitText) onunla birlikte küçülsün diye em.
     val NavLabel = Base.copy(fontSize = 12.sp, lineHeight = (40f / 12f).em, letterSpacing = 0.05.em)
 
@@ -64,6 +64,7 @@ object SerinType {
 
     // Seans süresi ve mini player.
     val SessionChip = Base.copy(fontSize = 14.sp, letterSpacing = 0.5.sp)
+    val SessionClock = Heading.copy(fontSize = 44.sp, letterSpacing = 1.sp)
     val SessionTime = Base.copy(fontSize = 12.sp, letterSpacing = 0.6.sp)
     val MiniTitle = Base.copy(fontSize = 15.sp, lineHeight = 20.sp)
 }
