@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -49,6 +50,7 @@ fun SplashScreen(onFinished: () -> Unit, modifier: Modifier = Modifier) {
         Image(
             painter = painterResource(R.drawable.splash_logo),
             contentDescription = null,
+            colorFilter = ColorFilter.tint(SerinTheme.colors.accent),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
