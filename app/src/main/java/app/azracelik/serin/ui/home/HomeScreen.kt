@@ -62,7 +62,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -79,6 +78,9 @@ import app.azracelik.serin.ui.components.SerinHeader
 import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.scaledByFont
 import app.azracelik.serin.ui.components.serinTextShadow
+import app.azracelik.serin.ui.components.AdaptivePreviews
+import app.azracelik.serin.ui.components.PreviewWindow
+import app.azracelik.serin.ui.components.SerinTab
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
 import java.time.LocalTime
@@ -475,10 +477,10 @@ private class MoonDrift(val periodMillis: Int, val dx: Dp, val dy: Dp)
 
 private val HeroMoonDrift = MoonDrift(periodMillis = 9000, dx = (-14).dp, dy = 12.dp)
 
-@Preview(widthDp = 393, heightDp = 852)
+@AdaptivePreviews
 @Composable
 private fun HomeScreenPreview() {
-    SerinTheme {
+    PreviewWindow(SerinTab.Home) {
         HomeScreen(
             meditations = PreviewContent.meditations,
             blogPosts = PreviewContent.blogPosts,
