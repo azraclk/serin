@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -28,6 +29,7 @@ import app.azracelik.serin.R
 import app.azracelik.serin.data.BlogPost
 import app.azracelik.serin.data.PreviewContent
 import app.azracelik.serin.data.bundledImage
+import app.azracelik.serin.ui.adaptive.LocalWindowSize
 import app.azracelik.serin.ui.components.CardShape
 import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.components.SerinHeader
@@ -47,6 +49,9 @@ sealed interface PostBodyState {
     data object ComingSoon : PostBodyState
 }
 
+/** Okunabilir satır uzunluğu için yazı sütununun en geniş hâli. */
+private val ReadingMaxWidth = 720.dp
+
 @Composable
 fun BlogPostScreen(
     post: BlogPost,
@@ -64,6 +69,7 @@ fun BlogPostScreen(
 @Composable
 private fun PostContent(post: BlogPost, body: PostBodyState, onRetry: () -> Unit) {
     val colors = SerinTheme.colors
+    // Kaydırma tüm genişlikte kalır; okunacak sütun ise okuma ölçüsünde ortalanır.
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -71,50 +77,55 @@ private fun PostContent(post: BlogPost, body: PostBodyState, onRetry: () -> Unit
             .verticalScroll(rememberScrollState())
             .padding(bottom = contentBottomPadding() + 32.dp),
     ) {
-        // Blog listesindeki kartla aynı ölçüler; burada görsel soluk değil.
-        RemoteImage(
-            url = post.image,
-            fallback = bundledImage(post.id),
-            modifier = Modifier
-                .padding(horizontal = 12.5.dp)
-                .fillMaxWidth()
-                .height(186.dp)
-                .serinShadow()
-                .clip(CardShape),
-        )
-        Spacer(Modifier.height(32.dp))
-        Text(
-            text = post.title,
-            style = SerinType.PostTitle,
-            modifier = Modifier.padding(horizontal = 24.dp),
-        )
-        Spacer(Modifier.height(20.dp))
-        Box(
-            Modifier
-                .size(width = 48.dp, height = 3.dp)
-                .clip(RoundedCornerShape(50))
-                .background(colors.accent),
-        )
-        Spacer(Modifier.height(28.dp))
-        when (body) {
-            PostBodyState.Loading -> CircularProgressIndicator(color = colors.accent)
-            is PostBodyState.Loaded -> Markdown(
-                body.blocks,
-                Modifier
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.widthIn(max = ReadingMaxWidth).fillMaxWidth(),
+        ) {
+            // Blog listesindeki kartla aynı ölçüler; burada görsel soluk değil.
+            RemoteImage(
+                url = post.image,
+                fallback = bundledImage(post.id),
+                modifier = Modifier
+                    .padding(horizontal = 12.5.dp)
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
+                    .height(if (LocalWindowSize.current.useRail) 260.dp else 186.dp)
+                    .serinShadow()
+                    .clip(CardShape),
             )
-            PostBodyState.Failed -> Message(stringResource(R.string.post_failed)) {
-                Text(
-                    text = stringResource(R.string.try_again),
-                    style = SerinType.PostBody.copy(color = colors.accent),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable(role = Role.Button, onClick = onRetry)
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+            Spacer(Modifier.height(32.dp))
+            Text(
+                text = post.title,
+                style = SerinType.PostTitle,
+                modifier = Modifier.padding(horizontal = 24.dp),
+            )
+            Spacer(Modifier.height(20.dp))
+            Box(
+                Modifier
+                    .size(width = 48.dp, height = 3.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(colors.accent),
+            )
+            Spacer(Modifier.height(28.dp))
+            when (body) {
+                PostBodyState.Loading -> CircularProgressIndicator(color = colors.accent)
+                is PostBodyState.Loaded -> Markdown(
+                    body.blocks,
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
                 )
+                PostBodyState.Failed -> Message(stringResource(R.string.post_failed)) {
+                    Text(
+                        text = stringResource(R.string.try_again),
+                        style = SerinType.PostBody.copy(color = colors.accent),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(role = Role.Button, onClick = onRetry)
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                    )
+                }
+                PostBodyState.ComingSoon -> Message(stringResource(R.string.post_coming_soon))
             }
-            PostBodyState.ComingSoon -> Message(stringResource(R.string.post_coming_soon))
         }
     }
 }

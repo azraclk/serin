@@ -16,13 +16,13 @@ import app.azracelik.serin.R
 
 @OptIn(ExperimentalTextApi::class)
 private fun variable(weight: Int) = Font(
-    R.font.dmsans_variable,
+    R.font.inter_variable,
     FontWeight(weight),
     variationSettings = FontVariation.Settings(FontVariation.weight(weight)),
 )
 
 /** Gövde ve küçük metinlerin yazı tipi; hiyerarşi boyut ve ağırlıkla kurulur. */
-val DmSans = FontFamily(variable(300), variable(400), variable(500), variable(700))
+val Inter = FontFamily(variable(300), variable(400), variable(500), variable(700))
 
 @OptIn(ExperimentalTextApi::class)
 private fun fraunces(weight: Int) = Font(
@@ -49,11 +49,11 @@ private fun heading() = TextStyle(
     fontWeight = FontWeight.Light,
 )
 
-/** Ana başlık sayılmayan, yazı tipi DM Sans kalan hafif metinler. */
-private val Light = TextStyle(fontFamily = DmSans, fontWeight = FontWeight.Light)
+/** Ana başlık sayılmayan, yazı tipi Inter kalan hafif metinler. */
+private val Light = TextStyle(fontFamily = Inter, fontWeight = FontWeight.Light)
 
 /** Renk belirtilmez; metinler temanın rengini alır (bkz. SerinTheme). */
-private val Base = TextStyle(fontFamily = DmSans)
+private val Base = TextStyle(fontFamily = Inter)
 
 /**
  * Metin stilleri; boyutlar yalnızca 12, 14, 16, 20, 24, 36 ve 44sp'den seçilir.
@@ -82,7 +82,7 @@ object SerinType {
     val PostTitle @Composable @ReadOnlyComposable get() =
         heading().copy(fontSize = 24.sp, lineHeight = 34.sp, textAlign = TextAlign.Center)
     val PostBody = Base.copy(fontSize = 16.sp, lineHeight = 26.sp)
-    // Yazı içi ara başlık; ana başlık değil, DM Sans kalır. Rengi altın yansımalı.
+    // Yazı içi ara başlık; ana başlık değil, Inter kalır. Rengi altın yansımalı.
     val PostHeading @Composable @ReadOnlyComposable get() =
         Light.copy(brush = SerinTheme.colors.gold, fontSize = 20.sp, lineHeight = 28.sp)
     val PostSubheading = Base.copy(fontSize = 16.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
@@ -94,23 +94,23 @@ object SerinType {
     val MiniTitle = Base.copy(fontSize = 16.sp, lineHeight = 20.sp)
 }
 
-/** Material bileşenlerinin varsayılan Roboto'ya düşmemesi için tüm stiller DM Sans'a çevrilir. */
+/** Material bileşenlerinin varsayılan Roboto'ya düşmemesi için tüm stiller Inter'a çevrilir. */
 val Typography = Typography().run {
     copy(
-        displayLarge = displayLarge.copy(fontFamily = DmSans),
-        displayMedium = displayMedium.copy(fontFamily = DmSans),
-        displaySmall = displaySmall.copy(fontFamily = DmSans),
-        headlineLarge = headlineLarge.copy(fontFamily = DmSans),
-        headlineMedium = headlineMedium.copy(fontFamily = DmSans),
-        headlineSmall = headlineSmall.copy(fontFamily = DmSans),
-        titleLarge = titleLarge.copy(fontFamily = DmSans),
-        titleMedium = titleMedium.copy(fontFamily = DmSans),
-        titleSmall = titleSmall.copy(fontFamily = DmSans),
-        bodyLarge = bodyLarge.copy(fontFamily = DmSans),
-        bodyMedium = bodyMedium.copy(fontFamily = DmSans),
-        bodySmall = bodySmall.copy(fontFamily = DmSans),
-        labelLarge = labelLarge.copy(fontFamily = DmSans),
-        labelMedium = labelMedium.copy(fontFamily = DmSans),
-        labelSmall = labelSmall.copy(fontFamily = DmSans),
+        displayLarge = displayLarge.copy(fontFamily = Inter),
+        displayMedium = displayMedium.copy(fontFamily = Inter),
+        displaySmall = displaySmall.copy(fontFamily = Inter),
+        headlineLarge = headlineLarge.copy(fontFamily = Inter),
+        headlineMedium = headlineMedium.copy(fontFamily = Inter),
+        headlineSmall = headlineSmall.copy(fontFamily = Inter),
+        titleLarge = titleLarge.copy(fontFamily = Inter),
+        titleMedium = titleMedium.copy(fontFamily = Inter),
+        titleSmall = titleSmall.copy(fontFamily = Inter),
+        bodyLarge = bodyLarge.copy(fontFamily = Inter),
+        bodyMedium = bodyMedium.copy(fontFamily = Inter),
+        bodySmall = bodySmall.copy(fontFamily = Inter),
+        labelLarge = labelLarge.copy(fontFamily = Inter),
+        labelMedium = labelMedium.copy(fontFamily = Inter),
+        labelSmall = labelSmall.copy(fontFamily = Inter),
     )
 }
