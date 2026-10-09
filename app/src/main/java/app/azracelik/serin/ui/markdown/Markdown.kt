@@ -40,7 +40,7 @@ fun Markdown(blocks: List<MdBlock>, modifier: Modifier = Modifier) {
                     if (index > 0) Spacer(Modifier.height(28.dp))
                     Text(
                         block.spans.toAnnotatedString(links),
-                        style = if (block.level <= 2) SerinType.PostHeading.copy(color = colors.accent) else SerinType.PostSubheading,
+                        style = if (block.level <= 2) SerinType.PostHeading else SerinType.PostSubheading,
                     )
                     Spacer(Modifier.height(10.dp))
                 }
