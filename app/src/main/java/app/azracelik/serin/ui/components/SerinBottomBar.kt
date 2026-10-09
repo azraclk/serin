@@ -62,7 +62,9 @@ private val BarBottomMargin = 12.dp
 private val BarInnerPadding = 8.dp
 private val ItemHeight = 48.dp
 private val IconSize = 24.dp
-private val RailWidth = 80.dp
+/** Seçili sekmenin etiketi (örn. "Meditasyon") 12sp'de küçülmeden sığacak kadar geniş. */
+private val RailWidth = 96.dp
+private val RailInnerPadding = 6.dp
 private val RailSideMargin = 12.dp
 private val RailItemHeight = 56.dp
 /** Seçili sekme, etiketini de gösterdiği için diğerlerinden bu kadar kat geniş yer alır. */
@@ -165,7 +167,7 @@ fun SerinNavigationRail(
             .serinShadow(BarShape)
             .clip(BarShape)
             .background(colors.bar)
-            .padding(horizontal = BarInnerPadding, vertical = BarInnerPadding),
+            .padding(horizontal = RailInnerPadding, vertical = BarInnerPadding),
     ) {
         SerinTab.entries.forEach { tab ->
             val isSelected = tab == selected
