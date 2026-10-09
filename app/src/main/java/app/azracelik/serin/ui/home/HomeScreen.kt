@@ -10,12 +10,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -66,16 +64,12 @@ import app.azracelik.serin.R
 import app.azracelik.serin.data.BlogPost
 import app.azracelik.serin.data.Meditation
 import app.azracelik.serin.data.PreviewContent
-import app.azracelik.serin.data.bundledImage
-import app.azracelik.serin.ui.components.CardBorderWidth
-import app.azracelik.serin.ui.components.CardShape
 import app.azracelik.serin.ui.components.FitText
-import app.azracelik.serin.ui.components.RemoteImage
+import app.azracelik.serin.ui.components.ImageCard
 import app.azracelik.serin.ui.components.PostRow
 import app.azracelik.serin.ui.components.SerinHeader
 import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.scaledByFont
-import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.components.serinTextShadow
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
@@ -143,7 +137,7 @@ fun HomeScreen(
             Spacer(Modifier.height(SectionGap))
             SectionTitle(R.string.home_explore)
             HorizontalList {
-                meditations.forEach { MeditationChip(it, onClick = { onMeditationClick(it) }) }
+                meditations.forEachIndexed { index, it -> MeditationChip(it, index, onClick = { onMeditationClick(it) }) }
             }
         }
         if (blogPosts.isNotEmpty()) {
@@ -178,35 +172,6 @@ private fun HorizontalList(content: @Composable RowScope.() -> Unit) {
     )
 }
 
-/** Görselin soluk arka plan olduğu, renk katmanlı kart; ana sayfadaki tüm kartlar bunu kullanır. */
-@Composable
-private fun ImageCard(
-    imageUrl: String,
-    imageId: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable BoxScope.() -> Unit,
-) {
-    val colors = SerinTheme.colors
-    Box(
-        modifier
-            .serinShadow()
-            .clip(CardShape)
-            .background(colors.surface)
-            .border(CardBorderWidth, colors.outline, CardShape)
-            .clickable(onClick = onClick),
-    ) {
-        RemoteImage(
-            url = imageUrl,
-            fallback = bundledImage(imageId),
-            alpha = 0.25f,
-            modifier = Modifier.matchParentSize(),
-        )
-        Box(Modifier.matchParentSize().background(colors.overlay))
-        content()
-    }
-}
-
 @Composable
 private fun PickCard(
     meditation: Meditation,
@@ -216,7 +181,7 @@ private fun PickCard(
     modifier: Modifier = Modifier,
 ) {
     val colors = SerinTheme.colors
-    ImageCard(meditation.image, meditation.id, onClick, modifier.fillMaxWidth().heightIn(min = 200.dp)) {
+    ImageCard(meditation.image, meditation.id, onClick, modifier.fillMaxWidth().heightIn(min = 200.dp), phase = 0) {
         Column(
             verticalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.align(Alignment.BottomStart).padding(20.dp),
@@ -263,7 +228,7 @@ private fun StartButton(onClick: () -> Unit) {
 @Composable
 private fun ResumeCard(meditation: Meditation, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = SerinTheme.colors
-    ImageCard(meditation.image, meditation.id, onClick, modifier.fillMaxWidth().heightIn(min = 72.dp)) {
+    ImageCard(meditation.image, meditation.id, onClick, modifier.fillMaxWidth().heightIn(min = 72.dp), shine = false) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -288,8 +253,8 @@ private fun ResumeCard(meditation: Meditation, onClick: () -> Unit, modifier: Mo
 }
 
 @Composable
-private fun MeditationChip(meditation: Meditation, onClick: () -> Unit) {
-    ImageCard(meditation.image, meditation.id, onClick, Modifier.size(width = 112.dp, height = 140.dp)) {
+private fun MeditationChip(meditation: Meditation, index: Int, onClick: () -> Unit) {
+    ImageCard(meditation.image, meditation.id, onClick, Modifier.size(width = 112.dp, height = 140.dp), phase = index) {
         FitText(
             text = meditation.label,
             style = SerinType.Caption.copy(textAlign = TextAlign.Center, shadow = serinTextShadow()),

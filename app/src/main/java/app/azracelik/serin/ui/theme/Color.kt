@@ -2,6 +2,7 @@ package app.azracelik.serin.ui.theme
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 val SerinPurple = Color(0xFF756AB6)
@@ -33,8 +34,18 @@ data class SerinColors(
     val onBar: Color,
     /** İlerleme çizgisinin boş kısmı. */
     val track: Color,
+    /** Ana başlıkların gümüş yansımalı dolgusu. */
+    val silver: Brush,
+    /** Vurgu metinlerinin altın yansımalı dolgusu. */
+    val gold: Brush,
     val isDark: Boolean,
 )
+
+/** Işığı yakalayan parlak bantlı çapraz geçiş; durak sayısı ve konumu iki temada da aynı. */
+private fun sheen(colors: List<Color>): Brush {
+    val stops = colors.mapIndexed { i, c -> i / (colors.size - 1f) to c }
+    return Brush.linearGradient(colorStops = stops.toTypedArray())
+}
 
 /** Figma'daki açık tema. */
 val LightColors = SerinColors(
@@ -51,6 +62,9 @@ val LightColors = SerinColors(
     bar = SerinPurple,
     onBar = Color.White,
     track = Color.Black,
+    // Beyaz zeminde açık gümüş görünmez; koyu çelikten başlayıp ortada yumuşakça parlar.
+    silver = sheen(listOf(Color(0xFF1F1D33), Color(0xFF6C688F), Color(0xFF2A2744), Color(0xFF7A769C), Color(0xFF1F1D33))),
+    gold = sheen(listOf(Color(0xFF4F4590), Color(0xFF8C80D6), Color(0xFF5A4F9E), Color(0xFF9A8FE0), Color(0xFF4F4590))),
     isDark = false,
 )
 
@@ -74,6 +88,8 @@ val DarkColors = SerinColors(
     bar = Color(0xFF332C5C),
     onBar = NightText,
     track = NightText.copy(alpha = 0.7f),
+    silver = sheen(listOf(Color(0xFFFFFFFF), Color(0xFFB4BAD9), Color(0xFFF6F4FF), Color(0xFF9AA1C8), Color(0xFFFFFFFF))),
+    gold = sheen(listOf(Color(0xFFFBF0C8), Color(0xFFD9B05E), Color(0xFFF5E2A0), Color(0xFFC49A48), Color(0xFFFBF0C8))),
     isDark = true,
 )
 
