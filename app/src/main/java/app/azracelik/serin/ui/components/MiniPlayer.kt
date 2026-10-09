@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -40,6 +41,7 @@ import app.azracelik.serin.ui.theme.SerinType
 private val MiniPlayerHeight = 64.dp
 private val MiniPlayerGap = 8.dp
 private val MiniPlayerShape = RoundedCornerShape(16.dp)
+private val MiniPlayerMaxWidth = 560.dp
 
 /** Mini player görünürken yüksekliği (boşluğuyla birlikte), görünmüyorken 0. */
 val LocalMiniPlayerInset = compositionLocalOf { 0.dp }
@@ -73,6 +75,8 @@ fun MiniPlayer(
         modifier
             .padding(horizontal = 12.dp)
             .padding(bottom = MiniPlayerGap)
+            // Geniş pencerede şerit tüm genişliğe yayılmasın.
+            .widthIn(max = MiniPlayerMaxWidth)
             .fillMaxWidth()
             .height(MiniPlayerHeight)
             .serinShadow(MiniPlayerShape)
