@@ -2,35 +2,34 @@ package app.azracelik.serin.ui.components
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.innerShadow
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -44,30 +43,28 @@ import app.azracelik.serin.ui.theme.SerinType
 enum class SerinTab(
     @StringRes val label: Int,
     @DrawableRes val icon: Int,
-    /** Figma'daki 393dp genişliğe göre ikonun yatay merkezi. */
-    val centerX: Float,
 ) {
-    Home(R.string.nav_home, R.drawable.ic_home, 80f),
-    Meditation(R.string.nav_meditation, R.drawable.ic_meditation, 200f),
-    Blog(R.string.nav_blog, R.drawable.ic_blog, 324f),
+    Home(R.string.nav_home, R.drawable.ic_home),
+    Meditation(R.string.nav_meditation, R.drawable.ic_meditation),
+    Blog(R.string.nav_blog, R.drawable.ic_blog),
 }
 
-private const val DesignWidth = 393f
-private val BumpHeight = 22.dp
-private val SlabHeight = 80.dp
-private val DiscSize = 64.dp
-private val DiscRing = 5.dp
-private val ItemWidth = 116.dp
+private val BarHeight = 64.dp
+private val BarShape = RoundedCornerShape(32.dp)
+private val BarSideMargin = 20.dp
+private val BarBottomMargin = 12.dp
+private val BarInnerPadding = 8.dp
+private val ItemHeight = 48.dp
 private val IconSize = 24.dp
-/** İkonun menü bileşeninin tepesine göre konumu: menüde dururken ve disk içinde ortalıyken. */
-private val RestingIconTop = BumpHeight + 19.dp
-private val RaisedIconTop = (DiscSize - IconSize) / 2
+/** Seçili sekme, etiketini de gösterdiği için diğerlerinden bu kadar kat geniş yer alır. */
+private const val SelectedWeight = 1.9f
 
 /** Alt menünün ekranın altından kapladığı yükseklik; kaydırılan içerik bu kadar boşluk bırakmalı. */
 @Composable
 fun bottomBarHeight(): Dp =
-    BumpHeight + SlabHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    BarHeight + BarBottomMargin + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
+/** Ekranın altında yüzen hap biçimli menü; seçili sekme ikonunun yanında etiketini de gösterir. */
 @Composable
 fun SerinBottomBar(
     selected: SerinTab,
@@ -75,58 +72,57 @@ fun SerinBottomBar(
     modifier: Modifier = Modifier,
 ) {
     val colors = SerinTheme.colors
-    BoxWithConstraints(modifier.fillMaxWidth().height(bottomBarHeight())) {
-        fun centerOf(tab: SerinTab) = maxWidth * (tab.centerX / DesignWidth)
-
-        Box(
-            Modifier
-                .offset(y = BumpHeight)
+    Box(modifier.fillMaxWidth().height(bottomBarHeight())) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = bottomBarHeight() - BarHeight)
+                .padding(horizontal = BarSideMargin)
                 .fillMaxWidth()
-                .height(maxHeight - BumpHeight)
+                .height(BarHeight)
+                .serinShadow(BarShape)
+                .clip(BarShape)
                 .background(colors.bar)
-                .innerShadow(RectangleShape, SerinDropShadow),
-        )
-        // Seçim diski menünün üstüne çıkar; zemin renginde halka, menüde oyuk izlenimi verir.
-        val discX by animateDpAsState(centerOf(selected) - DiscSize / 2, label = "selection")
-        Box(
-            Modifier
-                .offset(x = discX)
-                .size(DiscSize)
-                .clip(CircleShape)
-                .background(colors.bar)
-                .border(DiscRing, colors.background, CircleShape),
-        )
-        SerinTab.entries.forEach { tab ->
-            val isSelected = tab == selected
-            // 0 = menüde duruyor, 1 = diskin içinde yükselmiş.
-            val lift by animateFloatAsState(if (isSelected) 1f else 0f, label = "lift")
-            val iconTop = RestingIconTop + (RaisedIconTop - RestingIconTop) * lift
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .offset(x = centerOf(tab) - ItemWidth / 2)
-                    .width(ItemWidth)
-                    .height(BumpHeight + SlabHeight)
-                    .selectable(selected = isSelected, role = Role.Tab, onClick = { onSelect(tab) }),
-            ) {
-                Spacer(Modifier.height(iconTop))
-                Image(
-                    painter = painterResource(tab.icon),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(colors.onBar),
-                    modifier = Modifier.size(IconSize).alpha(0.7f + 0.3f * lift),
-                )
-                // Etiket sabit yükseklikte kalır: ikon yükselirken altındaki boşluk büyür.
-                Spacer(Modifier.height(RestingIconTop - iconTop + 2.dp))
-                FitText(
-                    text = stringResource(tab.label),
-                    style = SerinType.NavLabel.copy(
-                        color = colors.onBar.copy(alpha = if (isSelected) 1f else 0.75f),
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    ),
-                    // Sığma hesabında yalnızca genişlik sayılsın; yükseklik menünün dışına taşabilir.
-                    modifier = Modifier.wrapContentHeight(unbounded = true),
-                )
+                .padding(horizontal = BarInnerPadding),
+        ) {
+            SerinTab.entries.forEach { tab ->
+                val isSelected = tab == selected
+                val weight by animateFloatAsState(if (isSelected) SelectedWeight else 1f, label = "tabWeight")
+                val highlight by animateFloatAsState(if (isSelected) 0.2f else 0f, label = "tabHighlight")
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .weight(weight)
+                        .padding(horizontal = 2.dp)
+                        .heightIn(min = ItemHeight)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(colors.onBar.copy(alpha = highlight))
+                        .selectable(selected = isSelected, role = Role.Tab, onClick = { onSelect(tab) }),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(tab.icon),
+                            contentDescription = stringResource(tab.label),
+                            colorFilter = ColorFilter.tint(colors.onBar),
+                            modifier = Modifier.size(IconSize),
+                        )
+                        AnimatedVisibility(
+                            visible = isSelected,
+                            enter = fadeIn() + expandHorizontally(),
+                            exit = fadeOut() + shrinkHorizontally(),
+                            modifier = Modifier.weight(1f, fill = false),
+                        ) {
+                            Row {
+                                Spacer(Modifier.width(6.dp))
+                                FitText(
+                                    text = stringResource(tab.label),
+                                    style = SerinType.NavLabel.copy(color = colors.onBar, fontWeight = FontWeight.Bold),
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
