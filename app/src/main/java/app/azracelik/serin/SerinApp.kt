@@ -55,6 +55,8 @@ import app.azracelik.serin.ui.blog.BlogScreen
 import app.azracelik.serin.ui.blog.PostBodyState
 import app.azracelik.serin.ui.components.LocalMiniPlayerInset
 import app.azracelik.serin.ui.components.MiniPlayer
+import app.azracelik.serin.ui.components.PlaybackNotice
+import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.MiniPlayerInset
 import app.azracelik.serin.ui.components.RailInset
 import app.azracelik.serin.ui.components.SerinNavigationRail
@@ -182,18 +184,23 @@ fun SerinApp(
                                 // İçerik güncellenip bu meditasyon kaldırılmışsa ekran boş kalır.
                                 content.meditation(entry.arguments?.getString("id").orEmpty())?.let { meditation ->
                                     val isCurrent = playback.mediaId == meditation.id
-                                    MeditationDetailScreen(
-                                        meditation = meditation,
-                                        isPlaying = isCurrent && playback.isPlaying,
-                                        // Başka bir meditasyonun seansı sürüyorsa bu ekran baştan gösterilir.
-                                        session = if (isCurrent) playback.session else playback.session.copy(elapsedMs = 0),
-                                        isFavorite = meditation.id in favorites,
-                                        downloadStatus = meditation.audio?.let { downloads[AudioStore.key(meditation.id, it)] },
-                                        onLengthSelect = playerViewModel::setSessionLength,
-                                        onPlayClick = { playerViewModel.togglePlayback(meditation) },
-                                        onFavoriteToggle = { libraryViewModel.toggleFavorite(meditation.id) },
-                                        onDownloadClick = { libraryViewModel.toggleDownload(meditation) },
-                                    )
+                                    Box {
+                                        MeditationDetailScreen(
+                                            meditation = meditation,
+                                            isPlaying = isCurrent && playback.isPlaying,
+                                            // Başka bir meditasyonun seansı sürüyorsa bu ekran baştan gösterilir.
+                                            session = if (isCurrent) playback.session else playback.session.copy(elapsedMs = 0),
+                                            isFavorite = meditation.id in favorites,
+                                            downloadStatus = meditation.audio?.let { downloads[AudioStore.key(meditation.id, it)] },
+                                            onLengthSelect = playerViewModel::setSessionLength,
+                                            onPlayClick = { playerViewModel.togglePlayback(meditation) },
+                                            onFavoriteToggle = { libraryViewModel.toggleFavorite(meditation.id) },
+                                            onDownloadClick = { libraryViewModel.toggleDownload(meditation) },
+                                        )
+                                        playback.problem?.takeIf { isCurrent }?.let {
+                                            PlaybackNotice(it, Modifier.align(Alignment.BottomCenter).padding(bottom = contentBottomPadding() + 12.dp))
+                                        }
+                                    }
                                 }
                             }
                             composable(Routes.BLOG) {
