@@ -45,7 +45,17 @@ data class Meditation(
     val image: String,
     /** Sesi olmayan meditasyonlarda play butonu pasif görünür. */
     val audio: String? = null,
-)
+    /** Başlığın altında görünen kısa açıklama; yoksa hiçbir şey gösterilmez. */
+    val description: String? = null,
+    /** Nefes ritmi seçicisinin gösterildiği meditasyon. */
+    val breathing: Boolean = false,
+) {
+    /**
+     * Ritim seçici bu meditasyonda gösterilir mi. `breathing` alanı henüz eklenmemiş eski içerikte
+     * de çalışsın diye `breathing` id'li meditasyon da sayılır.
+     */
+    val hasBreathingPattern: Boolean get() = breathing || id == BreathingMeditationId
+}
 
 @Serializable
 data class BlogPost(

@@ -43,7 +43,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.azracelik.serin.data.AudioStore
 import app.azracelik.serin.data.BlogPost
-import app.azracelik.serin.data.BreathingMeditationId
 import app.azracelik.serin.data.HistoryStats
 import app.azracelik.serin.data.Meditation
 import app.azracelik.serin.playback.PlayerViewModel
@@ -201,7 +200,7 @@ fun SerinApp(
                                             onFavoriteToggle = { libraryViewModel.toggleFavorite(meditation.id) },
                                             onDownloadClick = { libraryViewModel.toggleDownload(meditation) },
                                             breathing = BreathingChoice(breathingPattern, libraryViewModel::selectBreathingPattern)
-                                                .takeIf { meditation.id == BreathingMeditationId },
+                                                .takeIf { meditation.hasBreathingPattern },
                                         )
                                         playback.problem?.takeIf { isCurrent }?.let {
                                             PlaybackNotice(it, Modifier.align(Alignment.BottomCenter).padding(bottom = contentBottomPadding() + 12.dp))
