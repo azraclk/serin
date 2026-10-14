@@ -16,7 +16,8 @@ enum class BreathPhase(@StringRes val cue: Int) {
     Inhale(R.string.breath_inhale),
     HoldFull(R.string.breath_hold),
     Exhale(R.string.breath_exhale),
-    HoldEmpty(R.string.breath_hold),
+    // Nefes verildikten sonra gelir; "Tut" denince akla dolu ciğerlerle tutmak geldiği için ayrı bir kelime.
+    HoldEmpty(R.string.breath_wait),
 }
 
 class BreathStep(val phase: BreathPhase, val seconds: Int)
