@@ -15,7 +15,8 @@ class ListenedMinutesTest {
     @Test
     fun wholeMinutesAreCounted() {
         assertEquals(1, listenedMinutes(60_000, tenMinutes))
-        assertEquals(2, listenedMinutes(119_000, tenMinutes))
+        assertEquals(1, listenedMinutes(119_000, tenMinutes))
+        assertEquals(2, listenedMinutes(120_000, tenMinutes))
     }
 
     @Test
