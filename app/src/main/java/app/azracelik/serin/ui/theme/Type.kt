@@ -87,6 +87,10 @@ object SerinType {
         Light.copy(brush = SerinTheme.colors.gold, fontSize = 20.sp, lineHeight = 28.sp)
     val PostSubheading = Base.copy(fontSize = 16.sp, lineHeight = 26.sp, fontWeight = FontWeight.Bold)
 
+    // Nefes evresi görselin üstündeki koyu perdede durur; gümüş yansıma yok, düz renkte okunur (rengi çağıran verir).
+    val BreathCue = TextStyle(fontFamily = Fraunces, fontWeight = FontWeight.Normal, fontSize = 36.sp, lineHeight = 44.sp)
+    val BreathSeconds = Base.copy(fontSize = 16.sp, lineHeight = 20.sp)
+
     // Seans süresi ve mini player.
     val SessionChip = Base.copy(fontSize = 14.sp, letterSpacing = 0.5.sp)
     val SessionClock = Light.copy(fontSize = 44.sp, letterSpacing = 1.sp)

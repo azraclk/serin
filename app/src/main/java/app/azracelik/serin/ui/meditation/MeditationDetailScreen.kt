@@ -344,7 +344,7 @@ private fun MoonOrb(meditation: Meditation, progress: Float, orbSize: Dp) {
             url = meditation.image,
             fallback = bundledImage(meditation.id),
             modifier = Modifier
-                .size(orbSize - 36.dp)
+                .size(orbSize - OrbImageInset)
                 .clip(CircleShape),
         )
     }
