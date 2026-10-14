@@ -8,6 +8,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import app.azracelik.serin.reminder.LocalReminder
+import app.azracelik.serin.reminder.ReminderPreference
+import app.azracelik.serin.reminder.ReminderScheduler
 import app.azracelik.serin.ui.theme.LocalThemeToggle
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.ThemePreference
@@ -17,6 +20,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val themePreference = ThemePreference(applicationContext)
+        val reminderPreference = ReminderPreference(applicationContext)
+        // Telefon yeniden başlamış ya da alarm sistem tarafından silinmiş olabilir.
+        ReminderScheduler.restore(applicationContext)
         setContent {
             // Kullanıcı seçim yapana kadar uygulama koyu temada açılır; sistem temasına bakılmaz.
             val dark = themePreference.override ?: true
@@ -31,6 +37,7 @@ class MainActivity : ComponentActivity() {
             SerinTheme(darkTheme = dark) {
                 CompositionLocalProvider(
                     LocalThemeToggle provides ThemeToggle(dark) { themePreference.setDark(!dark) },
+                    LocalReminder provides reminderPreference,
                 ) {
                     SerinApp()
                 }
