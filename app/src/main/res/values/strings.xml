@@ -20,6 +20,9 @@ Nefesi.</string>
     <string name="home_start">Başla</string>
     <string name="home_resume">Kaldığın yerden devam et</string>
     <string name="home_favorites">Favorilerin</string>
+    <string name="stats_streak">Gün serisi</string>
+    <string name="stats_week">Bu hafta</string>
+    <string name="stats_sessions">Seans</string>
     <string name="home_explore">Keşfet</string>
     <string name="home_read">Okumaya değer</string>
 

@@ -15,6 +15,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import app.azracelik.serin.data.HistoryStore
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import java.io.File
@@ -48,7 +49,10 @@ class PlaybackService : MediaSessionService() {
             // Kulaklık çıkarılınca duraklat.
             .setHandleAudioBecomingNoisy(true)
             .build()
-        sessionTimer = SessionTimer(player, scope).also { it.start() }
+        val history = HistoryStore.get(this)
+        sessionTimer = SessionTimer(player, scope) { mediaId, firstMinute ->
+            if (mediaId != null) history.addMinute(mediaId, firstMinute)
+        }.also { it.start() }
         mediaSession = MediaSession.Builder(this, player).build()
     }
 

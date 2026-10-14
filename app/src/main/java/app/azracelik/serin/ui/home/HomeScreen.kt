@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -67,16 +68,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.azracelik.serin.R
 import app.azracelik.serin.data.BlogPost
+import app.azracelik.serin.data.HistoryStats
 import app.azracelik.serin.data.Meditation
 import app.azracelik.serin.data.PreviewContent
 import app.azracelik.serin.ui.adaptive.LocalWindowSize
 import app.azracelik.serin.ui.adaptive.WidthClass
+import app.azracelik.serin.ui.components.CardBorderWidth
+import app.azracelik.serin.ui.components.CardShape
 import app.azracelik.serin.ui.components.FitText
 import app.azracelik.serin.ui.components.ImageCard
 import app.azracelik.serin.ui.components.PostRow
 import app.azracelik.serin.ui.components.SerinHeader
 import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.scaledByFont
+import app.azracelik.serin.ui.components.serinShadow
 import app.azracelik.serin.ui.components.serinTextShadow
 import app.azracelik.serin.ui.components.AdaptivePreviews
 import app.azracelik.serin.ui.components.PreviewWindow
@@ -115,6 +120,7 @@ fun HomeScreen(
     meditations: List<Meditation>,
     blogPosts: List<BlogPost>,
     favorites: List<Meditation>,
+    stats: HistoryStats,
     /** Daha önce dinlenmiş ve şu an seansı sürmeyen meditasyon; yoksa kart gösterilmez. */
     resume: Meditation?,
     sessionMinutes: Int,
@@ -132,7 +138,7 @@ fun HomeScreen(
 
     if (windowSize.width == WidthClass.Expanded) {
         TwoPaneHome(
-            greeting, pick, resumeCard, meditations, blogPosts, favorites, sessionMinutes,
+            greeting, pick, resumeCard, meditations, blogPosts, favorites, stats, sessionMinutes,
             onMeditationClick, onStartClick, onPostClick, modifier,
         )
         return
@@ -149,7 +155,7 @@ fun HomeScreen(
         Hero(greeting, sidePadding)
         Spacer(Modifier.height(24.dp))
         Featured(
-            pick, resumeCard, sessionMinutes, onMeditationClick, onStartClick,
+            pick, resumeCard, stats, sessionMinutes, onMeditationClick, onStartClick,
             Modifier.padding(horizontal = sidePadding),
         )
         Browse(meditations, blogPosts, favorites, sidePadding, windowSize.useRail, onMeditationClick, onPostClick)
@@ -168,6 +174,7 @@ private fun TwoPaneHome(
     meditations: List<Meditation>,
     blogPosts: List<BlogPost>,
     favorites: List<Meditation>,
+    stats: HistoryStats,
     sessionMinutes: Int,
     onMeditationClick: (Meditation) -> Unit,
     onStartClick: (Meditation) -> Unit,
@@ -196,7 +203,7 @@ private fun TwoPaneHome(
                     HeroText(greeting, PanePadding)
                     Spacer(Modifier.height(24.dp))
                     Featured(
-                        pick, resume, sessionMinutes, onMeditationClick, onStartClick,
+                        pick, resume, stats, sessionMinutes, onMeditationClick, onStartClick,
                         Modifier.padding(horizontal = PanePadding),
                     )
                 }
@@ -214,11 +221,12 @@ private fun TwoPaneHome(
     }
 }
 
-/** Önerilen meditasyon ve varsa kaldığın yerden devam kartı. */
+/** Önerilen meditasyon, varsa kaldığın yerden devam kartı ve tamamlanmış seans varsa özet. */
 @Composable
 private fun Featured(
     pick: Meditation?,
     resume: Meditation?,
+    stats: HistoryStats,
     sessionMinutes: Int,
     onMeditationClick: (Meditation) -> Unit,
     onStartClick: (Meditation) -> Unit,
@@ -236,6 +244,10 @@ private fun Featured(
         if (resume != null) {
             Spacer(Modifier.height(16.dp))
             ResumeCard(meditation = resume, onClick = { onStartClick(resume) })
+        }
+        if (stats.totalSessions > 0) {
+            Spacer(Modifier.height(16.dp))
+            StatsCard(stats)
         }
     }
 }
@@ -393,6 +405,33 @@ private fun ResumeCard(meditation: Meditation, onClick: () -> Unit, modifier: Mo
     }
 }
 
+/** Gün serisi, son yedi günde dinlenen süre ve toplam seans. */
+@Composable
+private fun StatsCard(stats: HistoryStats, modifier: Modifier = Modifier) {
+    val colors = SerinTheme.colors
+    Row(
+        modifier
+            .fillMaxWidth()
+            .serinShadow()
+            .clip(CardShape)
+            .background(colors.surface)
+            .border(CardBorderWidth, colors.outline, CardShape)
+            .padding(vertical = 16.dp),
+    ) {
+        Stat(stats.streakDays.toString(), stringResource(R.string.stats_streak), Modifier.weight(1f))
+        Stat(stringResource(R.string.session_minutes, stats.weekMinutes), stringResource(R.string.stats_week), Modifier.weight(1f))
+        Stat(stats.totalSessions.toString(), stringResource(R.string.stats_sessions), Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun Stat(value: String, label: String, modifier: Modifier = Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, style = SerinType.SectionTitle)
+        Text(label, style = SerinType.Caption.copy(color = SerinTheme.colors.textMuted))
+    }
+}
+
 @Composable
 private fun MeditationChip(meditation: Meditation, index: Int, onClick: () -> Unit) {
     ImageCard(meditation.image, meditation.id, onClick, Modifier.size(width = 112.dp, height = 140.dp), phase = index) {
@@ -493,6 +532,7 @@ private fun HomeScreenPreview() {
             meditations = PreviewContent.meditations,
             blogPosts = PreviewContent.blogPosts,
             favorites = PreviewContent.meditations.take(2),
+            stats = HistoryStats(streakDays = 5, weekMinutes = 40, totalSessions = 12),
             resume = PreviewContent.meditations[2],
             sessionMinutes = 10,
             onMeditationClick = {},

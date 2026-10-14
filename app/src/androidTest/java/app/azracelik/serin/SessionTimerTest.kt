@@ -61,7 +61,7 @@ class SessionTimerTest {
         audio = silentWav()
         onMain {
             player = ExoPlayer.Builder(instrumentation.targetContext).build()
-            timer = SessionTimer(player, scope).also { it.start() }
+            timer = SessionTimer(player, scope) { _, _ -> }.also { it.start() }
         }
     }
 
