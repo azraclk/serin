@@ -2,6 +2,11 @@ package app.azracelik.serin.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import app.azracelik.serin.playback.PlaybackProblem
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -189,6 +194,26 @@ private fun ThemeToggleButton(toggle: ThemeToggle, modifier: Modifier = Modifier
             }
         }
     }
+}
+
+/** Sesin neden çalmadığını söyleyen kısa bildirim; ekranın altında, içeriğin üstünde durur. */
+@Composable
+fun PlaybackNotice(problem: PlaybackProblem, modifier: Modifier = Modifier) {
+    val colors = SerinTheme.colors
+    Text(
+        text = stringResource(
+            if (problem == PlaybackProblem.LoadFailed) R.string.playback_load_failed else R.string.playback_other,
+        ),
+        style = SerinType.Caption.copy(color = colors.text, textAlign = TextAlign.Center),
+        modifier = modifier
+            .padding(horizontal = 24.dp)
+            .serinShadow()
+            .clip(CardShape)
+            .background(colors.surface)
+            .border(CardBorderWidth, colors.outline, CardShape)
+            .padding(horizontal = 18.dp, vertical = 12.dp)
+            .semantics { liveRegion = LiveRegionMode.Polite },
+    )
 }
 
 /** Sesi çevrimdışı dinlemek için indirir; indirilmişse kaldırır. [status] null ise ses indirilmemiştir. */

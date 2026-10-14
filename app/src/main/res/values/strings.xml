@@ -40,6 +40,8 @@ Nefesi.</string>
     <string name="download_done">İndirildi, kaldırmak için dokun</string>
     <string name="download_progress">İndiriliyor</string>
     <string name="download_failed">İndirilemedi, tekrar dene</string>
+    <string name="playback_load_failed">Ses yüklenemedi. Bağlantını kontrol et ya da sesi indirip çevrimdışı dinle.</string>
+    <string name="playback_other">Ses çalınamadı. Tekrar dene.</string>
 
     <!-- Blog yazısı -->
     <string name="post_failed">Yazı yüklenemedi. Bağlantını kontrol edip tekrar dene.</string>
