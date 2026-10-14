@@ -46,7 +46,6 @@ Nefesi.</string>
     <string name="reminder_save">Kaydet</string>
     <string name="reminder_cancel">Vazgeç</string>
     <string name="reminder_denied">Bildirim izni verilmedi. Telefon ayarlarından açabilirsin.</string>
-    <string name="reminder_exact">Tam saatinde hatırlatması için izin ver</string>
     <string name="reminder_channel">Günlük hatırlatıcı</string>
     <string name="reminder_text">Nefes almak için küçük bir mola ver.</string>
     <string name="reminder_text_streak">%d günlük serin sürüyor. Bugün de küçük bir mola ver.</string>
