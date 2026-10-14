@@ -94,6 +94,9 @@ fun MeditationDetailScreen(
     val pageModifier = modifier
         .fillMaxSize()
         .background(colors.background)
+    val pattern = breathing?.selected ?: BreathingPattern.Calm
+    // Küre ve ritim şeridi aynı nefes durumunu okur; bu yüzden ikisinin üstünde burada durur.
+    val breathingState = rememberBreathingState(isPlaying, pattern)
 
     // Küre ve kontroller yan yana ancak yeterli genişlik varsa sığar; yoksa alt alta dizilir ve kayar.
     if (windowSize.isLandscapeShort && windowSize.contentWidth >= SideBySideMinWidth) {
@@ -110,18 +113,17 @@ fun MeditationDetailScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(bottom = contentBottomPadding()),
             ) {
-                BreathingGlow(
-                    isPlaying = isPlaying,
-                    size = orbSize,
-                    pattern = breathing?.selected ?: BreathingPattern.Calm,
-                    showCue = breathing != null,
-                ) {
+                BreathingGlow(isPlaying = isPlaying, size = orbSize, state = breathingState) {
                     MoonOrb(meditation = meditation, progress = session.progress, orbSize = orbSize)
                 }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.widthIn(max = 360.dp),
                 ) {
+                    if (breathing != null) {
+                        BreathingRhythm(breathingState, pattern)
+                        Spacer(Modifier.height(12.dp))
+                    }
                     SessionControls(
                         meditation, isPlaying, isBuffering, session, isFavorite, downloadStatus,
                         onLengthSelect, onPlayClick, onFavoriteToggle, onDownloadClick, breathing, gap = 0.6f,
@@ -166,18 +168,20 @@ fun MeditationDetailScreen(
                     }
                 },
                 orb = { orbSize ->
-                    BreathingGlow(
-                        isPlaying = isPlaying,
-                        size = orbSize,
-                        pattern = breathing?.selected ?: BreathingPattern.Calm,
-                        showCue = breathing != null,
-                    ) {
+                    BreathingGlow(isPlaying = isPlaying, size = orbSize, state = breathingState) {
                         MoonOrb(meditation = meditation, progress = session.progress, orbSize = orbSize)
                     }
                 },
                 controls = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Spacer(Modifier.height((36 * gap).dp))
+                        if (breathing != null) {
+                            // Evrenin adı ve ritim şeridi kürenin hemen altında, başlıktan önce durur.
+                            Spacer(Modifier.height((16 * gap).dp))
+                            BreathingRhythm(breathingState, pattern)
+                            Spacer(Modifier.height((20 * gap).dp))
+                        } else {
+                            Spacer(Modifier.height((36 * gap).dp))
+                        }
                         SessionControls(
                             meditation, isPlaying, isBuffering, session, isFavorite, downloadStatus,
                             onLengthSelect, onPlayClick, onFavoriteToggle, onDownloadClick, breathing, gap,
