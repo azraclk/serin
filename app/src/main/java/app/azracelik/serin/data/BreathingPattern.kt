@@ -1,5 +1,6 @@
 package app.azracelik.serin.data
 
+import androidx.core.content.edit
 import android.content.Context
 import androidx.annotation.StringRes
 import app.azracelik.serin.R
@@ -65,6 +66,6 @@ class BreathingPatternStore(context: Context) {
 
     fun select(pattern: BreathingPattern) {
         _pattern.value = pattern
-        prefs.edit().putString(PatternKey, pattern.name).apply()
+        prefs.edit { putString(PatternKey, pattern.name) }
     }
 }

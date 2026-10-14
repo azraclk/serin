@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Aynı dalda yeni bir çalıştırma başlayınca eskisi iptal edilir.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Birim testleri, lint ve debug derlemesi; cihaz gerektiren testlerin kodu da derlenir ama çalıştırılmaz.
+      - name: Test, lint and build
+        run: ./gradlew --console=plain testDebugUnitTest lintDebug assembleDebug compileDebugAndroidTestKotlin
+
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            app/build/reports
+            app/build/test-results
+          if-no-files-found: ignore
