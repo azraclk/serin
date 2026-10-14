@@ -19,7 +19,7 @@ private const val StreakWindowDays = 7
 
 private val json = Json { ignoreUnknownKeys = true }
 
-/** Sonuna kadar dinlenmiş bir seans. [epochDay], seansın bittiği günün yerel tarihidir. */
+/** En az bir dakika dinlenmiş bir seans; [minutes] dinlenen tam dakikadır. [epochDay], seansın başladığı günün yerel tarihidir. */
 @Serializable
 data class SessionRecord(val meditationId: String, val minutes: Int, val epochDay: Long)
 
@@ -51,6 +51,19 @@ data class HistoryStats(val streakDays: Int, val weekMinutes: Int, val totalSess
 fun List<SessionRecord>.withRecord(record: SessionRecord): List<SessionRecord> = (this + record).takeLast(MaxRecords)
 
 /**
+ * Seansın bir tam dakikası daha dinlendi. İlk dakikada seans kayda girer; sonrakilerde en son
+ * kaydın süresi bir artar. Gece yarısını geçen seans başladığı güne yazılır.
+ */
+fun List<SessionRecord>.withMinute(meditationId: String, firstMinute: Boolean, epochDay: Long): List<SessionRecord> {
+    val last = lastOrNull()
+    return if (firstMinute || last == null || last.meditationId != meditationId) {
+        withRecord(SessionRecord(meditationId, 1, epochDay))
+    } else {
+        dropLast(1) + last.copy(minutes = last.minutes + 1)
+    }
+}
+
+/**
  * Tamamlanan seansların kaydı. [PlaybackService] yazar, ekranlar okur; ikisi de aynı süreçte
  * çalıştığı için tek bir örnek paylaşılır.
  */
@@ -60,9 +73,9 @@ class HistoryStore private constructor(context: Context) {
     private val _records = MutableStateFlow(load())
     val records: StateFlow<List<SessionRecord>> = _records.asStateFlow()
 
-    fun add(meditationId: String, minutes: Int) {
-        val record = SessionRecord(meditationId, minutes, LocalDate.now().toEpochDay())
-        _records.update { it.withRecord(record) }
+    /** Çalan seansın bir tam dakikası dinlendi; [firstMinute] seansın ilk dakikasıdır. */
+    fun addMinute(meditationId: String, firstMinute: Boolean) {
+        _records.update { it.withMinute(meditationId, firstMinute, LocalDate.now().toEpochDay()) }
         prefs.edit().putString(HistoryKey, json.encodeToString(_records.value)).apply()
     }
 

@@ -56,4 +56,40 @@ class HistoryTest {
         assertEquals(100L, records.first().epochDay)
         assertEquals(599L, records.last().epochDay)
     }
+
+    @Test
+    fun firstMinuteStartsARecord() {
+        val records = emptyList<SessionRecord>().withMinute("sleep", firstMinute = true, epochDay = 5)
+        assertEquals(listOf(SessionRecord("sleep", 1, 5)), records)
+    }
+
+    @Test
+    fun laterMinutesExtendTheOpenRecord() {
+        val records = emptyList<SessionRecord>()
+            .withMinute("sleep", true, 5)
+            .withMinute("sleep", false, 5)
+            .withMinute("sleep", false, 5)
+        assertEquals(listOf(SessionRecord("sleep", 3, 5)), records)
+    }
+
+    @Test
+    fun aNewSessionGetsItsOwnRecord() {
+        val records = emptyList<SessionRecord>()
+            .withMinute("sleep", true, 5)
+            .withMinute("sleep", false, 5)
+            .withMinute("sleep", true, 6)
+        assertEquals(listOf(SessionRecord("sleep", 2, 5), SessionRecord("sleep", 1, 6)), records)
+    }
+
+    @Test
+    fun aMinuteOfADifferentMeditationDoesNotExtendTheLastRecord() {
+        val records = listOf(SessionRecord("sleep", 4, 5)).withMinute("focus", firstMinute = false, epochDay = 5)
+        assertEquals(listOf(SessionRecord("sleep", 4, 5), SessionRecord("focus", 1, 5)), records)
+    }
+
+    @Test
+    fun listeningForOneMinuteCountsForTheStreak() {
+        val stats = HistoryStats.of(emptyList<SessionRecord>().withMinute("sleep", true, today.toEpochDay()), today)
+        assertEquals(HistoryStats(streakDays = 1, weekMinutes = 1, totalSessions = 1), stats)
+    }
 }
