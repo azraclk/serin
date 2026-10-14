@@ -45,6 +45,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.azracelik.serin.R
@@ -258,6 +259,17 @@ private fun SessionControls(
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 24.dp),
         )
+        // Kısa ekranda yer kıt; açıklama saat ve düğmelere yer bıraksın diye gizlenir.
+        if (meditation.description != null && gap >= 0.6f) {
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = meditation.description,
+                style = SerinType.Caption.copy(color = colors.textMuted, textAlign = TextAlign.Center),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = 32.dp),
+            )
+        }
         Spacer(Modifier.height(8.dp))
         Text(
             text = formatDuration(session.remainingMs),

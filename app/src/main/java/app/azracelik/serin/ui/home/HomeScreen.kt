@@ -344,6 +344,14 @@ private fun PickCard(
                 style = SerinType.Caption.copy(color = colors.textSoft),
             )
             Text(meditation.title, style = SerinType.PickTitle)
+            if (meditation.description != null) {
+                Text(
+                    text = meditation.description,
+                    style = SerinType.Caption.copy(color = colors.textSoft),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             Spacer(Modifier.height(6.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 StartButton(onStart)
