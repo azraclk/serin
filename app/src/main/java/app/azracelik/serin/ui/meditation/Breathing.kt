@@ -54,7 +54,7 @@ private val BreathEasing = CubicBezierEasing(0.45f, 0f, 0.55f, 1f)
 internal val OrbImageInset = 36.dp
 
 // Perde ve üstündeki yazı iki temada da aynıdır: görsel hep siyah-beyaz çizim olduğu için tema rengine
-// bağlanmaz. Görselin en parlak yerinde bile yazı 6,5:1 kontrastla okunur.
+// bağlanmaz. Görselin en parlak yerinde bile yazı 7,9:1 kontrastla okunur.
 private val VeilColor = Color(0xFF15131F).copy(alpha = 0.78f)
 private val VeilText = Color(0xFFF6EFD6)
 
