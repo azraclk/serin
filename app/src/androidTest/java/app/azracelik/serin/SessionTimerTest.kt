@@ -31,6 +31,7 @@ class SessionTimerTest {
     private lateinit var player: ExoPlayer
     private lateinit var timer: SessionTimer
     private lateinit var audio: File
+    private val completions = mutableListOf<Int>()
 
     /** Ağa bağlı kalmamak için 3 saniyelik sessiz bir WAV dosyası üretilir. */
     private fun silentWav(): File {
@@ -61,7 +62,7 @@ class SessionTimerTest {
         audio = silentWav()
         onMain {
             player = ExoPlayer.Builder(instrumentation.targetContext).build()
-            timer = SessionTimer(player, scope).also { it.start() }
+            timer = SessionTimer(player, scope) { _, minutes -> completions += minutes }.also { it.start() }
         }
     }
 
@@ -132,5 +133,6 @@ class SessionTimerTest {
         assertFalse(readMain { player.isPlaying })
         assertEquals("Ses başa sarılmalı", 0L, readMain { player.currentPosition })
         assertEquals("Seans sıfırlanmalı", 0L, MeditationSession.state.value.elapsedMs)
+        assertEquals("Biten seans bir kez bildirilmeli", listOf(0), completions)
     }
 }

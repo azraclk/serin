@@ -42,6 +42,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.azracelik.serin.data.BlogPost
+import app.azracelik.serin.data.HistoryStats
 import app.azracelik.serin.data.Meditation
 import app.azracelik.serin.playback.PlayerViewModel
 import app.azracelik.serin.ui.adaptive.HeightClass
@@ -65,6 +66,7 @@ import app.azracelik.serin.ui.meditation.MeditationScreen
 import app.azracelik.serin.ui.splash.SplashScreen
 import app.azracelik.serin.ui.theme.SerinTheme
 import kotlinx.coroutines.delay
+import java.time.LocalDate
 
 private const val SplashFadeOutMillis = 300
 
@@ -94,6 +96,7 @@ fun SerinApp(
 ) {
     val content by contentViewModel.content.collectAsStateWithLifecycle()
     val favorites by libraryViewModel.favorites.collectAsStateWithLifecycle()
+    val history by libraryViewModel.history.collectAsStateWithLifecycle()
     val playback by playerViewModel.state.collectAsStateWithLifecycle()
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -149,6 +152,7 @@ fun SerinApp(
                                     meditations = content.meditations,
                                     blogPosts = content.blogPosts,
                                     favorites = content.meditations(favorites),
+                                    stats = remember(history) { HistoryStats.of(history, LocalDate.now()) },
                                     // Seansı süren meditasyonu mini player zaten gösteriyor.
                                     resume = lastId?.takeIf { it != playback.mediaId }?.let(content::meditation),
                                     sessionMinutes = playback.session.lengthMinutes,

@@ -17,7 +17,12 @@ private const val FadeOutMillis = 10_000L
  * Sesi [MeditationSession] süresi boyunca döngüde çalar; başta yavaşça açar, son saniyelerde kısarak
  * bitirir ve başa sarıp duraklatır. Servisin içinde çalıştığı için ekran kapalıyken de süre işler.
  */
-class SessionTimer(private val player: Player, private val scope: CoroutineScope) : Player.Listener {
+class SessionTimer(
+    private val player: Player,
+    private val scope: CoroutineScope,
+    /** Seans sonuna kadar dinlenince çağrılır. */
+    private val onCompleted: (mediaId: String?, minutes: Int) -> Unit,
+) : Player.Listener {
     private var ticker: Job? = null
     private var elapsedMs = 0L
 
@@ -55,6 +60,7 @@ class SessionTimer(private val player: Player, private val scope: CoroutineScope
         elapsedMs += deltaMs
         val lengthMs = MeditationSession.state.value.lengthMs
         if (elapsedMs >= lengthMs) {
+            onCompleted(player.currentMediaItem?.mediaId, MeditationSession.state.value.lengthMinutes)
             player.pause()
             player.seekTo(0)
             reset()
