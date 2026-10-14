@@ -21,7 +21,8 @@ data class SessionState(
  * çalıştığı için bu durum ikisi arasında doğrudan paylaşılır.
  */
 object MeditationSession {
-    val LengthsMinutes = listOf(5, 10, 20)
+    /** Uzun süreler uykuya dalarken ses kendiliğinden kapansın diye. */
+    val LengthsMinutes = listOf(5, 10, 20, 30, 60)
     const val DefaultLengthMinutes = 10
 
     private val _state = MutableStateFlow(SessionState(DefaultLengthMinutes * MinuteMillis))

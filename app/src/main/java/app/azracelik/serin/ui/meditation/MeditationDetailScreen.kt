@@ -320,12 +320,13 @@ private fun MoonOrb(meditation: Meditation, progress: Float, orbSize: Dp) {
     }
 }
 
-/** Seans süresi seçimi: ay evreleri, 5 dk hilal, 10 dk yarım, 20 dk dolunay. */
+/** Seans süresi seçimi: ay evreleri; süre uzadıkça ay dolar, en uzunu dolunaydır. */
 @Composable
 private fun SessionLengthPicker(selected: Int, onSelect: (Int) -> Unit) {
     val colors = SerinTheme.colors
     val lengths = MeditationSession.LengthsMinutes
-    Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
+    // Beş seçenek dar telefonlara (320dp) sığsın diye aralık küçük tutulur.
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         lengths.forEachIndexed { index, minutes ->
             val isSelected = minutes == selected
             val tint = if (isSelected) colors.accent else colors.textMuted
