@@ -41,6 +41,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import app.azracelik.serin.data.AudioStore
 import app.azracelik.serin.data.BlogPost
 import app.azracelik.serin.data.HistoryStats
 import app.azracelik.serin.data.Meditation
@@ -97,6 +98,7 @@ fun SerinApp(
     val content by contentViewModel.content.collectAsStateWithLifecycle()
     val favorites by libraryViewModel.favorites.collectAsStateWithLifecycle()
     val history by libraryViewModel.history.collectAsStateWithLifecycle()
+    val downloads by libraryViewModel.downloads.collectAsStateWithLifecycle()
     val playback by playerViewModel.state.collectAsStateWithLifecycle()
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -186,9 +188,11 @@ fun SerinApp(
                                         // Başka bir meditasyonun seansı sürüyorsa bu ekran baştan gösterilir.
                                         session = if (isCurrent) playback.session else playback.session.copy(elapsedMs = 0),
                                         isFavorite = meditation.id in favorites,
+                                        downloadStatus = meditation.audio?.let { downloads[AudioStore.key(meditation.id, it)] },
                                         onLengthSelect = playerViewModel::setSessionLength,
                                         onPlayClick = { playerViewModel.togglePlayback(meditation) },
                                         onFavoriteToggle = { libraryViewModel.toggleFavorite(meditation.id) },
+                                        onDownloadClick = { libraryViewModel.toggleDownload(meditation) },
                                     )
                                 }
                             }

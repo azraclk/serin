@@ -44,7 +44,9 @@ import app.azracelik.serin.data.Meditation
 import app.azracelik.serin.ui.adaptive.LocalWindowSize
 import app.azracelik.serin.data.PreviewContent
 import app.azracelik.serin.data.bundledImage
+import app.azracelik.serin.data.AudioStatus
 import app.azracelik.serin.ui.components.CardShape
+import app.azracelik.serin.ui.components.DownloadButton
 import app.azracelik.serin.ui.components.FavoriteButton
 import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.components.SerinHeader
@@ -67,9 +69,11 @@ fun MeditationDetailScreen(
     isPlaying: Boolean,
     session: SessionState,
     isFavorite: Boolean,
+    downloadStatus: AudioStatus?,
     onLengthSelect: (Int) -> Unit,
     onPlayClick: () -> Unit,
     onFavoriteToggle: () -> Unit,
+    onDownloadClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val windowSize = LocalWindowSize.current
@@ -100,7 +104,10 @@ fun MeditationDetailScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.widthIn(max = 360.dp),
                 ) {
-                    SessionControls(meditation, isPlaying, session, isFavorite, onLengthSelect, onPlayClick, onFavoriteToggle, gap = 0.6f)
+                    SessionControls(
+                        meditation, isPlaying, session, isFavorite, downloadStatus,
+                        onLengthSelect, onPlayClick, onFavoriteToggle, onDownloadClick, gap = 0.6f,
+                    )
                 }
             }
         }
@@ -148,7 +155,10 @@ fun MeditationDetailScreen(
                 controls = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Spacer(Modifier.height((36 * gap).dp))
-                        SessionControls(meditation, isPlaying, session, isFavorite, onLengthSelect, onPlayClick, onFavoriteToggle, gap)
+                        SessionControls(
+                            meditation, isPlaying, session, isFavorite, downloadStatus,
+                            onLengthSelect, onPlayClick, onFavoriteToggle, onDownloadClick, gap,
+                        )
                     }
                 },
             )
@@ -204,9 +214,11 @@ private fun SessionControls(
     isPlaying: Boolean,
     session: SessionState,
     isFavorite: Boolean,
+    downloadStatus: AudioStatus?,
     onLengthSelect: (Int) -> Unit,
     onPlayClick: () -> Unit,
     onFavoriteToggle: () -> Unit,
+    onDownloadClick: () -> Unit,
     gap: Float,
 ) {
     val hasAudio = meditation.audio != null
@@ -228,8 +240,8 @@ private fun SessionControls(
         SessionLengthPicker(selected = session.lengthMinutes, onSelect = onLengthSelect)
         Spacer(Modifier.height((28 * gap).dp))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            // Soldaki boşluk kalbin genişliğindedir; oynat düğmesi ortada kalır.
-            Spacer(Modifier.size(48.dp))
+            // Sesi olmayan meditasyonda indirme düğmesinin yeri boş kalır; oynat düğmesi ortada durur.
+            if (hasAudio) DownloadButton(downloadStatus, onDownloadClick) else Spacer(Modifier.size(48.dp))
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -328,9 +340,11 @@ private fun MeditationDetailScreenPreview() {
             isPlaying = true,
             session = SessionState(lengthMs = 600_000, elapsedMs = 240_000),
             isFavorite = true,
+            downloadStatus = AudioStatus.Downloaded,
             onLengthSelect = {},
             onPlayClick = {},
             onFavoriteToggle = {},
+            onDownloadClick = {},
         )
     }
 }

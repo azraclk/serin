@@ -13,6 +13,7 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import app.azracelik.serin.data.AudioStore
 import app.azracelik.serin.data.Meditation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -34,6 +35,7 @@ data class PlaybackState(
 /** Ekranlarla [PlaybackService] arasındaki köprü. */
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
     private val prefs = application.getSharedPreferences(PrefsName, Context.MODE_PRIVATE)
+    private val audioStore = AudioStore.get(application)
     private val controllerFuture = MediaController.Builder(
         application,
         SessionToken(application, ComponentName(application, PlaybackService::class.java)),
@@ -80,7 +82,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         }
         val item = MediaItem.Builder()
             .setMediaId(meditation.id)
-            .setUri(audio)
+            // İndirilmiş kopya varsa internetsiz de çalar.
+            .setUri(audioStore.localFile(meditation.id, audio)?.toUri() ?: audio.toUri())
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setTitle(meditation.title)

@@ -36,6 +36,10 @@ Nefesi.</string>
     <string name="session_minutes">%d dk</string>
     <string name="close">Kapat</string>
     <string name="favorite">Favori</string>
+    <string name="download">Çevrimdışı dinlemek için indir</string>
+    <string name="download_done">İndirildi, kaldırmak için dokun</string>
+    <string name="download_progress">İndiriliyor</string>
+    <string name="download_failed">İndirilemedi, tekrar dene</string>
 
     <!-- Blog yazısı -->
     <string name="post_failed">Yazı yüklenemedi. Bağlantını kontrol edip tekrar dene.</string>
