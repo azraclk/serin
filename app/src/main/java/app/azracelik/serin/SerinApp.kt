@@ -43,6 +43,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.azracelik.serin.data.AudioStore
 import app.azracelik.serin.data.BlogPost
+import app.azracelik.serin.data.BreathingMeditationId
 import app.azracelik.serin.data.HistoryStats
 import app.azracelik.serin.data.Meditation
 import app.azracelik.serin.playback.PlayerViewModel
@@ -64,6 +65,7 @@ import app.azracelik.serin.ui.components.SerinBottomBar
 import app.azracelik.serin.ui.components.bottomBarHeight
 import app.azracelik.serin.ui.components.SerinTab
 import app.azracelik.serin.ui.home.HomeScreen
+import app.azracelik.serin.ui.meditation.BreathingChoice
 import app.azracelik.serin.ui.meditation.MeditationDetailScreen
 import app.azracelik.serin.ui.meditation.MeditationScreen
 import app.azracelik.serin.ui.splash.SplashScreen
@@ -101,6 +103,7 @@ fun SerinApp(
     val favorites by libraryViewModel.favorites.collectAsStateWithLifecycle()
     val history by libraryViewModel.history.collectAsStateWithLifecycle()
     val downloads by libraryViewModel.downloads.collectAsStateWithLifecycle()
+    val breathingPattern by libraryViewModel.breathingPattern.collectAsStateWithLifecycle()
     val playback by playerViewModel.state.collectAsStateWithLifecycle()
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -197,6 +200,8 @@ fun SerinApp(
                                             onPlayClick = { playerViewModel.togglePlayback(meditation) },
                                             onFavoriteToggle = { libraryViewModel.toggleFavorite(meditation.id) },
                                             onDownloadClick = { libraryViewModel.toggleDownload(meditation) },
+                                            breathing = BreathingChoice(breathingPattern, libraryViewModel::selectBreathingPattern)
+                                                .takeIf { meditation.id == BreathingMeditationId },
                                         )
                                         playback.problem?.takeIf { isCurrent }?.let {
                                             PlaybackNotice(it, Modifier.align(Alignment.BottomCenter).padding(bottom = contentBottomPadding() + 12.dp))

@@ -53,6 +53,7 @@ import app.azracelik.serin.ui.adaptive.LocalWindowSize
 import app.azracelik.serin.data.PreviewContent
 import app.azracelik.serin.data.bundledImage
 import app.azracelik.serin.data.AudioStatus
+import app.azracelik.serin.data.BreathingPattern
 import app.azracelik.serin.ui.components.CardShape
 import app.azracelik.serin.ui.components.DownloadButton
 import app.azracelik.serin.ui.components.FavoriteButton
@@ -84,6 +85,8 @@ fun MeditationDetailScreen(
     onFavoriteToggle: () -> Unit,
     onDownloadClick: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Yalnızca nefes meditasyonunda verilir: seçili ritim ve seçici. */
+    breathing: BreathingChoice? = null,
 ) {
     val windowSize = LocalWindowSize.current
     val colors = SerinTheme.colors
@@ -106,7 +109,12 @@ fun MeditationDetailScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(bottom = contentBottomPadding()),
             ) {
-                BreathingGlow(isPlaying = isPlaying, size = orbSize) {
+                BreathingGlow(
+                    isPlaying = isPlaying,
+                    size = orbSize,
+                    pattern = breathing?.selected ?: BreathingPattern.Calm,
+                    showCue = breathing != null,
+                ) {
                     MoonOrb(meditation = meditation, progress = session.progress, orbSize = orbSize)
                 }
                 Column(
@@ -115,7 +123,7 @@ fun MeditationDetailScreen(
                 ) {
                     SessionControls(
                         meditation, isPlaying, isBuffering, session, isFavorite, downloadStatus,
-                        onLengthSelect, onPlayClick, onFavoriteToggle, onDownloadClick, gap = 0.6f,
+                        onLengthSelect, onPlayClick, onFavoriteToggle, onDownloadClick, breathing, gap = 0.6f,
                     )
                 }
             }
@@ -157,7 +165,12 @@ fun MeditationDetailScreen(
                     }
                 },
                 orb = { orbSize ->
-                    BreathingGlow(isPlaying = isPlaying, size = orbSize) {
+                    BreathingGlow(
+                        isPlaying = isPlaying,
+                        size = orbSize,
+                        pattern = breathing?.selected ?: BreathingPattern.Calm,
+                        showCue = breathing != null,
+                    ) {
                         MoonOrb(meditation = meditation, progress = session.progress, orbSize = orbSize)
                     }
                 },
@@ -166,7 +179,7 @@ fun MeditationDetailScreen(
                         Spacer(Modifier.height((36 * gap).dp))
                         SessionControls(
                             meditation, isPlaying, isBuffering, session, isFavorite, downloadStatus,
-                            onLengthSelect, onPlayClick, onFavoriteToggle, onDownloadClick, gap,
+                            onLengthSelect, onPlayClick, onFavoriteToggle, onDownloadClick, breathing, gap,
                         )
                     }
                 },
@@ -232,6 +245,7 @@ private fun SessionControls(
     onPlayClick: () -> Unit,
     onFavoriteToggle: () -> Unit,
     onDownloadClick: () -> Unit,
+    breathing: BreathingChoice?,
     gap: Float,
 ) {
     val hasAudio = meditation.audio != null
@@ -251,6 +265,10 @@ private fun SessionControls(
         )
         Spacer(Modifier.height((28 * gap).dp))
         SessionLengthPicker(selected = session.lengthMinutes, onSelect = onLengthSelect)
+        if (breathing != null) {
+            Spacer(Modifier.height((16 * gap).dp))
+            BreathingPatternPicker(breathing)
+        }
         Spacer(Modifier.height((28 * gap).dp))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             // Sesi olmayan meditasyonda indirme düğmesinin yeri boş kalır; oynat düğmesi ortada durur.
@@ -317,6 +335,29 @@ private fun MoonOrb(meditation: Meditation, progress: Float, orbSize: Dp) {
                 .size(orbSize - 36.dp)
                 .clip(CircleShape),
         )
+    }
+}
+
+/** Nefes meditasyonunda seçili ritim ve onu değiştiren işlev. */
+class BreathingChoice(val selected: BreathingPattern, val onSelect: (BreathingPattern) -> Unit)
+
+/** Nefes ritmi seçimi; seans süresi seçicisiyle aynı dilde, yalnızca yazıdan oluşur. */
+@Composable
+private fun BreathingPatternPicker(choice: BreathingChoice) {
+    val colors = SerinTheme.colors
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        BreathingPattern.entries.forEach { pattern ->
+            val isSelected = pattern == choice.selected
+            Text(
+                text = stringResource(pattern.label),
+                style = SerinType.SessionChip.copy(color = if (isSelected) colors.onAccent else colors.textMuted),
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(if (isSelected) colors.accent else Color.Transparent)
+                    .selectable(selected = isSelected, role = Role.RadioButton, onClick = { choice.onSelect(pattern) })
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+            )
+        }
     }
 }
 

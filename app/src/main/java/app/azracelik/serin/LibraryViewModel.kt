@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import app.azracelik.serin.data.AudioStatus
 import app.azracelik.serin.data.AudioStore
+import app.azracelik.serin.data.BreathingPattern
+import app.azracelik.serin.data.BreathingPatternStore
 import app.azracelik.serin.data.FavoritesStore
 import app.azracelik.serin.data.HistoryStore
 import app.azracelik.serin.data.Meditation
@@ -12,12 +14,17 @@ import app.azracelik.serin.data.Meditation
 class LibraryViewModel(application: Application) : AndroidViewModel(application) {
     private val favoritesStore = FavoritesStore(application)
     private val audioStore = AudioStore.get(application)
+    private val breathingStore = BreathingPatternStore(application)
 
     val favorites = favoritesStore.ids
 
     val history = HistoryStore.get(application).records
 
     val downloads = audioStore.status
+
+    val breathingPattern = breathingStore.pattern
+
+    fun selectBreathingPattern(pattern: BreathingPattern) = breathingStore.select(pattern)
 
     fun toggleFavorite(id: String) = favoritesStore.toggle(id)
 
