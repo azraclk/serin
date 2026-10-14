@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.semantics.Role
+import app.azracelik.serin.ui.reminder.ReminderButton
 import app.azracelik.serin.ui.theme.LocalThemeToggle
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.ThemeToggle
@@ -131,6 +132,7 @@ fun SerinHeader(modifier: Modifier = Modifier, showThemeToggle: Boolean = true) 
         if (showThemeToggle && toggle != null) {
             ThemeToggleButton(toggle, Modifier.align(Alignment.CenterStart).padding(start = 14.dp))
         }
+        if (showThemeToggle) ReminderButton(Modifier.align(Alignment.CenterEnd).padding(end = 14.dp))
     }
 }
 
