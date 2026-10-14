@@ -50,8 +50,8 @@ class PlaybackService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true)
             .build()
         val history = HistoryStore.get(this)
-        sessionTimer = SessionTimer(player, scope) { mediaId, minutes ->
-            if (mediaId != null) history.add(mediaId, minutes)
+        sessionTimer = SessionTimer(player, scope) { mediaId, firstMinute ->
+            if (mediaId != null) history.addMinute(mediaId, firstMinute)
         }.also { it.start() }
         mediaSession = MediaSession.Builder(this, player).build()
     }
