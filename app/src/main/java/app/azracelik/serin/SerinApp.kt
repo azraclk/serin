@@ -90,8 +90,10 @@ private val SerinTab.route
 fun SerinApp(
     contentViewModel: ContentViewModel = viewModel(),
     playerViewModel: PlayerViewModel = viewModel(),
+    libraryViewModel: LibraryViewModel = viewModel(),
 ) {
     val content by contentViewModel.content.collectAsStateWithLifecycle()
+    val favorites by libraryViewModel.favorites.collectAsStateWithLifecycle()
     val playback by playerViewModel.state.collectAsStateWithLifecycle()
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -146,6 +148,7 @@ fun SerinApp(
                                 HomeScreen(
                                     meditations = content.meditations,
                                     blogPosts = content.blogPosts,
+                                    favorites = content.meditations(favorites),
                                     // Seansı süren meditasyonu mini player zaten gösteriyor.
                                     resume = lastId?.takeIf { it != playback.mediaId }?.let(content::meditation),
                                     sessionMinutes = playback.session.lengthMinutes,
@@ -159,7 +162,12 @@ fun SerinApp(
                                 )
                             }
                             composable(Routes.MEDITATION) {
-                                MeditationScreen(content.meditations, onMeditationClick = { navController.navigate(Routes.meditationDetail(it)) })
+                                MeditationScreen(
+                                    content.meditations,
+                                    favorites = favorites,
+                                    onMeditationClick = { navController.navigate(Routes.meditationDetail(it)) },
+                                    onFavoriteToggle = { libraryViewModel.toggleFavorite(it.id) },
+                                )
                             }
                             composable(
                                 Routes.MEDITATION_DETAIL,
@@ -173,8 +181,10 @@ fun SerinApp(
                                         isPlaying = isCurrent && playback.isPlaying,
                                         // Başka bir meditasyonun seansı sürüyorsa bu ekran baştan gösterilir.
                                         session = if (isCurrent) playback.session else playback.session.copy(elapsedMs = 0),
+                                        isFavorite = meditation.id in favorites,
                                         onLengthSelect = playerViewModel::setSessionLength,
                                         onPlayClick = { playerViewModel.togglePlayback(meditation) },
+                                        onFavoriteToggle = { libraryViewModel.toggleFavorite(meditation.id) },
                                     )
                                 }
                             }

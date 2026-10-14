@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import app.azracelik.serin.data.Meditation
 import app.azracelik.serin.ui.adaptive.LocalWindowSize
 import app.azracelik.serin.data.PreviewContent
+import app.azracelik.serin.ui.components.FavoriteButton
 import app.azracelik.serin.ui.components.FitText
 import app.azracelik.serin.ui.components.ImageCard
 import app.azracelik.serin.ui.components.SerinHeader
@@ -38,7 +39,9 @@ private const val CardAspectRatio = 0.67f
 @Composable
 fun MeditationScreen(
     meditations: List<Meditation>,
+    favorites: Set<String>,
     onMeditationClick: (Meditation) -> Unit,
+    onFavoriteToggle: (Meditation) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val windowSize = LocalWindowSize.current
@@ -60,14 +63,25 @@ fun MeditationScreen(
             contentPadding = PaddingValues(start = sidePadding, end = sidePadding, bottom = contentBottomPadding()),
         ) {
             itemsIndexed(meditations, key = { _, it -> it.id }) { index, meditation ->
-                MeditationCard(meditation, index, onClick = { onMeditationClick(meditation) })
+                MeditationCard(
+                    meditation, index,
+                    favorite = meditation.id in favorites,
+                    onClick = { onMeditationClick(meditation) },
+                    onFavoriteToggle = { onFavoriteToggle(meditation) },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun MeditationCard(meditation: Meditation, index: Int, onClick: () -> Unit) {
+private fun MeditationCard(
+    meditation: Meditation,
+    index: Int,
+    favorite: Boolean,
+    onClick: () -> Unit,
+    onFavoriteToggle: () -> Unit,
+) {
     ImageCard(meditation.image, meditation.id, onClick, Modifier.aspectRatio(CardAspectRatio), phase = index) {
         FitText(
             text = meditation.label,
@@ -77,11 +91,17 @@ private fun MeditationCard(meditation: Meditation, index: Int, onClick: () -> Un
                 .fillMaxWidth()
                 .padding(top = 6.dp, start = 8.dp, end = 8.dp),
         )
+        FavoriteButton(favorite, onFavoriteToggle, Modifier.align(Alignment.BottomEnd))
     }
 }
 
 @AdaptivePreviews
 @Composable
 private fun MeditationScreenPreview() {
-    PreviewWindow(SerinTab.Meditation) { MeditationScreen(PreviewContent.meditations, onMeditationClick = {}) }
+    PreviewWindow(SerinTab.Meditation) { MeditationScreen(
+            PreviewContent.meditations,
+            favorites = setOf(PreviewContent.meditations[1].id),
+            onMeditationClick = {},
+            onFavoriteToggle = {},
+        ) }
 }

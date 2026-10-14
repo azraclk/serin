@@ -45,6 +45,7 @@ import app.azracelik.serin.ui.adaptive.LocalWindowSize
 import app.azracelik.serin.data.PreviewContent
 import app.azracelik.serin.data.bundledImage
 import app.azracelik.serin.ui.components.CardShape
+import app.azracelik.serin.ui.components.FavoriteButton
 import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.components.SerinHeader
 import app.azracelik.serin.playback.MeditationSession
@@ -65,8 +66,10 @@ fun MeditationDetailScreen(
     meditation: Meditation,
     isPlaying: Boolean,
     session: SessionState,
+    isFavorite: Boolean,
     onLengthSelect: (Int) -> Unit,
     onPlayClick: () -> Unit,
+    onFavoriteToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val windowSize = LocalWindowSize.current
@@ -97,7 +100,7 @@ fun MeditationDetailScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.widthIn(max = 360.dp),
                 ) {
-                    SessionControls(meditation, isPlaying, session, onLengthSelect, onPlayClick, gap = 0.6f)
+                    SessionControls(meditation, isPlaying, session, isFavorite, onLengthSelect, onPlayClick, onFavoriteToggle, gap = 0.6f)
                 }
             }
         }
@@ -145,7 +148,7 @@ fun MeditationDetailScreen(
                 controls = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Spacer(Modifier.height((36 * gap).dp))
-                        SessionControls(meditation, isPlaying, session, onLengthSelect, onPlayClick, gap)
+                        SessionControls(meditation, isPlaying, session, isFavorite, onLengthSelect, onPlayClick, onFavoriteToggle, gap)
                     }
                 },
             )
@@ -200,8 +203,10 @@ private fun SessionControls(
     meditation: Meditation,
     isPlaying: Boolean,
     session: SessionState,
+    isFavorite: Boolean,
     onLengthSelect: (Int) -> Unit,
     onPlayClick: () -> Unit,
+    onFavoriteToggle: () -> Unit,
     gap: Float,
 ) {
     val hasAudio = meditation.audio != null
@@ -222,21 +227,26 @@ private fun SessionControls(
         Spacer(Modifier.height((28 * gap).dp))
         SessionLengthPicker(selected = session.lengthMinutes, onSelect = onLengthSelect)
         Spacer(Modifier.height((28 * gap).dp))
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(64.dp)
-                .alpha(if (hasAudio) 1f else 0.3f)
-                .clip(CircleShape)
-                .background(colors.accent)
-                .clickable(enabled = hasAudio, role = Role.Button, onClick = onPlayClick),
-        ) {
-            Image(
-                painter = painterResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play),
-                contentDescription = stringResource(if (isPlaying) R.string.pause else R.string.play),
-                colorFilter = ColorFilter.tint(colors.onAccent),
-                modifier = Modifier.size(32.dp),
-            )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Soldaki boşluk kalbin genişliğindedir; oynat düğmesi ortada kalır.
+            Spacer(Modifier.size(48.dp))
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(64.dp)
+                    .alpha(if (hasAudio) 1f else 0.3f)
+                    .clip(CircleShape)
+                    .background(colors.accent)
+                    .clickable(enabled = hasAudio, role = Role.Button, onClick = onPlayClick),
+            ) {
+                Image(
+                    painter = painterResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play),
+                    contentDescription = stringResource(if (isPlaying) R.string.pause else R.string.play),
+                    colorFilter = ColorFilter.tint(colors.onAccent),
+                    modifier = Modifier.size(32.dp),
+                )
+            }
+            FavoriteButton(isFavorite, onFavoriteToggle)
         }
     }
 }
@@ -317,8 +327,10 @@ private fun MeditationDetailScreenPreview() {
             meditation = PreviewContent.meditations[3],
             isPlaying = true,
             session = SessionState(lengthMs = 600_000, elapsedMs = 240_000),
+            isFavorite = true,
             onLengthSelect = {},
             onPlayClick = {},
+            onFavoriteToggle = {},
         )
     }
 }

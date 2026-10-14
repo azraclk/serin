@@ -19,6 +19,7 @@ Nefesi.</string>
     <string name="home_pick_label">Bugünün seçimi</string>
     <string name="home_start">Başla</string>
     <string name="home_resume">Kaldığın yerden devam et</string>
+    <string name="home_favorites">Favorilerin</string>
     <string name="home_explore">Keşfet</string>
     <string name="home_read">Okumaya değer</string>
 
@@ -31,6 +32,7 @@ Nefesi.</string>
     <string name="pause">Duraklat</string>
     <string name="session_minutes">%d dk</string>
     <string name="close">Kapat</string>
+    <string name="favorite">Favori</string>
 
     <!-- Blog yazısı -->
     <string name="post_failed">Yazı yüklenemedi. Bağlantını kontrol edip tekrar dene.</string>

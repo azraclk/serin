@@ -39,4 +39,10 @@ class ContentTest {
         )
         assertEquals(ContentBaseUrl + "b.jpg", content.home.banner)
     }
+
+    @Test
+    fun favoritesKeepContentOrderAndSkipUnknownIds() {
+        val favorites = bundled.meditations(setOf("sleep", "mindfulness", "removed"))
+        assertEquals(listOf("mindfulness", "sleep"), favorites.map { it.id })
+    }
 }
