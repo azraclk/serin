@@ -68,7 +68,8 @@ private const val VeilOpenAlpha = 0.66f
  * [content] çalarken [pattern]'in ritminde hafifçe büyüyüp küçülür ve arkasında mor bir ışık yayılır:
  * nefes alırken büyür, tutarken olduğu yerde kalır, verirken küçülür. [showCue] açıksa görsel
  * koyulaşır ve evrenin adı ("Nefes al", "Tut", "Nefes ver") ile kalan saniye üstüne yazılır.
- * Duraklatılınca perde kalkar, küre yavaşça dinlenme hâline döner.
+ * Duraklatılınca perde kalkar, küre yavaşça dinlenme hâline döner. [haptics] verilirse her evre
+ * titreşimle de belirtilir.
  */
 @Composable
 fun BreathingGlow(
@@ -77,6 +78,7 @@ fun BreathingGlow(
     modifier: Modifier = Modifier,
     pattern: BreathingPattern = BreathingPattern.Calm,
     showCue: Boolean = false,
+    haptics: BreathHaptics? = null,
     content: @Composable () -> Unit,
 ) {
     val glow = SerinTheme.colors.accent
@@ -91,26 +93,32 @@ fun BreathingGlow(
     var secondsLeft by remember { mutableIntStateOf(0) }
     // Perde evre sürdükçe iner, duraklatınca kalkar; koyuluğu ayrıca nefesle birlikte oynar.
     val veil by animateFloatAsState(if (showCue && phase != null) 1f else 0f, tween(600), label = "breathVeil")
-    LaunchedEffect(isPlaying, animationsEnabled, pattern) {
+    LaunchedEffect(isPlaying, animationsEnabled, pattern, haptics) {
         if (isPlaying && animationsEnabled) {
-            while (true) {
-                for (step in pattern.steps) {
-                    phase = step.phase
-                    val millis = step.seconds * 1000
-                    coroutineScope {
-                        launch {
-                            for (second in step.seconds downTo 1) {
-                                secondsLeft = second
-                                delay(1000)
+            try {
+                while (true) {
+                    for (step in pattern.steps) {
+                        phase = step.phase
+                        haptics?.play(step.phase, step.seconds)
+                        val millis = step.seconds * 1000
+                        coroutineScope {
+                            launch {
+                                for (second in step.seconds downTo 1) {
+                                    secondsLeft = second
+                                    delay(1000)
+                                }
                             }
-                        }
-                        when (step.phase) {
-                            BreathPhase.Inhale -> breath.animateTo(1f, tween(millis, easing = BreathEasing))
-                            BreathPhase.Exhale -> breath.animateTo(0f, tween(millis, easing = BreathEasing))
-                            BreathPhase.HoldFull, BreathPhase.HoldEmpty -> delay(millis.toLong())
+                            when (step.phase) {
+                                BreathPhase.Inhale -> breath.animateTo(1f, tween(millis, easing = BreathEasing))
+                                BreathPhase.Exhale -> breath.animateTo(0f, tween(millis, easing = BreathEasing))
+                                BreathPhase.HoldFull, BreathPhase.HoldEmpty -> delay(millis.toLong())
+                            }
                         }
                     }
                 }
+            } finally {
+                // Duraklatılınca, ritim ya da titreşim ayarı değişince ya da ekrandan çıkılınca titreşim hemen kesilir.
+                haptics?.cancel()
             }
         } else {
             phase = null

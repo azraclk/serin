@@ -26,6 +26,10 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     fun selectBreathingPattern(pattern: BreathingPattern) = breathingStore.select(pattern)
 
+    val breathingHaptics = breathingStore.haptics
+
+    fun setBreathingHaptics(enabled: Boolean) = breathingStore.setHaptics(enabled)
+
     fun toggleFavorite(id: String) = favoritesStore.toggle(id)
 
     /** İndirilmemişse (ya da indirme başarısızsa) indirir, indirilmişse telefondan kaldırır. */

@@ -5,6 +5,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
@@ -91,6 +94,7 @@ fun MeditationDetailScreen(
 ) {
     val windowSize = LocalWindowSize.current
     val colors = SerinTheme.colors
+    val haptics = rememberBreathHaptics(enabled = breathing?.haptics == true)
     val pageModifier = modifier
         .fillMaxSize()
         .background(colors.background)
@@ -115,6 +119,7 @@ fun MeditationDetailScreen(
                     size = orbSize,
                     pattern = breathing?.selected ?: BreathingPattern.Calm,
                     showCue = breathing != null,
+                    haptics = haptics,
                 ) {
                     MoonOrb(meditation = meditation, progress = session.progress, orbSize = orbSize)
                 }
@@ -171,6 +176,7 @@ fun MeditationDetailScreen(
                         size = orbSize,
                         pattern = breathing?.selected ?: BreathingPattern.Calm,
                         showCue = breathing != null,
+                    haptics = haptics,
                     ) {
                         MoonOrb(meditation = meditation, progress = session.progress, orbSize = orbSize)
                     }
@@ -350,14 +356,28 @@ private fun MoonOrb(meditation: Meditation, progress: Float, orbSize: Dp) {
     }
 }
 
-/** Nefes meditasyonunda seçili ritim ve onu değiştiren işlev. */
-class BreathingChoice(val selected: BreathingPattern, val onSelect: (BreathingPattern) -> Unit)
+/** Nefes meditasyonunda seçili ritim, titreşim tercihi ve bunları değiştiren işlevler. */
+class BreathingChoice(
+    val selected: BreathingPattern,
+    val onSelect: (BreathingPattern) -> Unit,
+    val haptics: Boolean,
+    val onHapticsChange: (Boolean) -> Unit,
+)
 
-/** Nefes ritmi seçimi; seans süresi seçicisiyle aynı dilde, yalnızca yazıdan oluşur. */
+/**
+ * Nefes ritmi seçimi; seans süresi seçicisiyle aynı dilde, yalnızca yazıdan oluşur. Telefon titreşebiliyorsa
+ * ritimlerin yanında bir de titreşim anahtarı vardır; ritimlerden biri seçilir, titreşim ise açılıp kapanır.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun BreathingPatternPicker(choice: BreathingChoice) {
     val colors = SerinTheme.colors
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    val canVibrate = rememberCanVibrate()
+    // Büyük yazı ayarında chip'ler alt satıra geçer.
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
         BreathingPattern.entries.forEach { pattern ->
             val isSelected = pattern == choice.selected
             Text(
@@ -367,6 +387,17 @@ private fun BreathingPatternPicker(choice: BreathingChoice) {
                     .clip(CircleShape)
                     .background(if (isSelected) colors.accent else Color.Transparent)
                     .selectable(selected = isSelected, role = Role.RadioButton, onClick = { choice.onSelect(pattern) })
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+            )
+        }
+        if (canVibrate) {
+            Text(
+                text = stringResource(R.string.breath_haptics),
+                style = SerinType.SessionChip.copy(color = if (choice.haptics) colors.onAccent else colors.textMuted),
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(if (choice.haptics) colors.accent else Color.Transparent)
+                    .toggleable(value = choice.haptics, role = Role.Switch, onValueChange = choice.onHapticsChange)
                     .padding(horizontal = 14.dp, vertical = 8.dp),
             )
         }
