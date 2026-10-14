@@ -1,5 +1,6 @@
 package app.azracelik.serin.data
 
+import androidx.core.content.edit
 import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,6 @@ class FavoritesStore(context: Context) {
 
     fun toggle(id: String) {
         _ids.update { it.toggled(id) }
-        prefs.edit().putStringSet(FavoritesKey, _ids.value).apply()
+        prefs.edit { putStringSet(FavoritesKey, _ids.value) }
     }
 }

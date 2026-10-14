@@ -1,5 +1,6 @@
 package app.azracelik.serin.data
 
+import androidx.core.content.edit
 import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -76,7 +77,7 @@ class HistoryStore private constructor(context: Context) {
     /** Çalan seansın bir tam dakikası dinlendi; [firstMinute] seansın ilk dakikasıdır. */
     fun addMinute(meditationId: String, firstMinute: Boolean) {
         _records.update { it.withMinute(meditationId, firstMinute, LocalDate.now().toEpochDay()) }
-        prefs.edit().putString(HistoryKey, json.encodeToString(_records.value)).apply()
+        prefs.edit { putString(HistoryKey, json.encodeToString(_records.value)) }
     }
 
     private fun load(): List<SessionRecord> {

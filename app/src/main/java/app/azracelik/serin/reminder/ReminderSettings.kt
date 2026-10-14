@@ -1,5 +1,6 @@
 package app.azracelik.serin.reminder
 
+import androidx.core.content.edit
 import android.content.Context
 import app.azracelik.serin.data.SessionRecord
 import java.time.LocalDate
@@ -27,11 +28,11 @@ class ReminderStore(context: Context) {
     }
 
     fun save(settings: ReminderSettings) {
-        prefs.edit()
-            .putBoolean(EnabledKey, settings.enabled)
-            .putInt(HourKey, settings.hour)
-            .putInt(MinuteKey, settings.minute)
-            .apply()
+        prefs.edit {
+            putBoolean(EnabledKey, settings.enabled)
+            putInt(HourKey, settings.hour)
+            putInt(MinuteKey, settings.minute)
+        }
     }
 }
 

@@ -1,5 +1,6 @@
 package app.azracelik.serin.ui.theme
 
+import androidx.core.content.edit
 import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,7 +19,7 @@ class ThemePreference(context: Context) {
 
     fun setDark(dark: Boolean) {
         override = dark
-        prefs.edit().putBoolean(KeyDark, dark).apply()
+        prefs.edit { putBoolean(KeyDark, dark) }
     }
 }
 

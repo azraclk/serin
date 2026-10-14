@@ -78,7 +78,7 @@ class PlaybackService : MediaSessionService() {
     }
 }
 
-@OptIn(UnstableApi::class)
+@UnstableApi
 private var cache: SimpleCache? = null
 
 /** Aynı klasörde tek bir SimpleCache olabilir; servis yeniden oluşturulsa da aynısı kullanılır. */

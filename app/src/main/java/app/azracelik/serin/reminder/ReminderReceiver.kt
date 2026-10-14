@@ -23,5 +23,17 @@ class ReminderReceiver : BroadcastReceiver() {
 
 /** Telefon yeniden başlayınca, uygulama güncellenince ya da saat değişince alarmı yeniden kurar. */
 class RescheduleReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) = ReminderScheduler.restore(context)
+    override fun onReceive(context: Context, intent: Intent) {
+        // Yalnızca sistemin gönderdiği bildirimlere yanıt verilir.
+        if (intent.action in RestoreActions) ReminderScheduler.restore(context)
+    }
+
+    private companion object {
+        val RestoreActions = setOf(
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_MY_PACKAGE_REPLACED,
+            Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED,
+        )
+    }
 }
