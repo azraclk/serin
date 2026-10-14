@@ -2,6 +2,10 @@ package app.azracelik.serin.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import app.azracelik.serin.data.AudioStatus
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
@@ -183,6 +187,39 @@ private fun ThemeToggleButton(toggle: ThemeToggle, modifier: Modifier = Modifier
                 drawLine(color, Offset(2.5f, HorizonY), Offset(21.5f, HorizonY), HorizonStroke, StrokeCap.Round)
                 drawLine(color, Offset(7f, 20.6f), Offset(17f, 20.6f), HorizonStroke, StrokeCap.Round)
             }
+        }
+    }
+}
+
+/** Sesi çevrimdışı dinlemek için indirir; indirilmişse kaldırır. [status] null ise ses indirilmemiştir. */
+@Composable
+fun DownloadButton(status: AudioStatus?, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = SerinTheme.colors
+    val description = stringResource(
+        when (status) {
+            AudioStatus.Downloaded -> R.string.download_done
+            AudioStatus.Downloading -> R.string.download_progress
+            AudioStatus.Failed -> R.string.download_failed
+            null -> R.string.download
+        },
+    )
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .clickable(enabled = status != AudioStatus.Downloading, role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description },
+    ) {
+        if (status == AudioStatus.Downloading) {
+            CircularProgressIndicator(color = colors.accent, strokeWidth = 2.dp, modifier = Modifier.size(22.dp))
+        } else {
+            Image(
+                painter = painterResource(if (status == AudioStatus.Downloaded) R.drawable.ic_download_done else R.drawable.ic_download),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(if (status == AudioStatus.Downloaded) colors.accent else colors.textSoft),
+                modifier = Modifier.size(26.dp),
+            )
         }
     }
 }
