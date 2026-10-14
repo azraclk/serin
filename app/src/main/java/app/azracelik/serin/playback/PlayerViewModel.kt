@@ -29,10 +29,15 @@ data class PlaybackState(
     /** Seansı süren (çalan ya da duraklatılmış) meditasyonun id'si. */
     val mediaId: String? = null,
     val isPlaying: Boolean = false,
+    /** Çalmak istendi ama ses henüz yüklenip hazır olmadı. */
+    val isBuffering: Boolean = false,
     /** [mediaId] için ses çalınamadıysa nedeni; ses çalmaya başlayınca ya da seans bitince kalkar. */
     val problem: PlaybackProblem? = null,
     val session: SessionState = MeditationSession.state.value,
-)
+) {
+    /** Çalıyor ya da çalmak üzere; düğme duraklatma görevi görür. */
+    val isActive: Boolean get() = isPlaying || isBuffering
+}
 
 /** Ekranlarla [PlaybackService] arasındaki köprü. */
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
@@ -108,12 +113,13 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     private fun toggle(controller: MediaController) {
         when {
-            controller.isPlaying -> controller.pause()
             // Hata alan oynatıcı play() ile toparlanmaz; ses baştan hazırlanır.
             controller.playerError != null -> {
                 controller.prepare()
                 controller.play()
             }
+            // Yüklenirken de duraklatılabilir.
+            controller.playWhenReady -> controller.pause()
             else -> controller.play()
         }
     }
@@ -130,6 +136,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         player.value = PlaybackState(
             mediaId = controller.currentMediaItem?.mediaId,
             isPlaying = controller.isPlaying,
+            isBuffering = controller.playWhenReady && controller.playbackState == Player.STATE_BUFFERING,
             problem = controller.playerError?.let { playbackProblemOf(it.errorCode) },
         )
     }

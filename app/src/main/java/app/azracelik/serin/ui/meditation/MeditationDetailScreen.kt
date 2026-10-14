@@ -20,7 +20,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.requiredSize
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,6 +75,7 @@ private val SideBySideMinWidth = 560.dp
 fun MeditationDetailScreen(
     meditation: Meditation,
     isPlaying: Boolean,
+    isBuffering: Boolean,
     session: SessionState,
     isFavorite: Boolean,
     downloadStatus: AudioStatus?,
@@ -105,7 +114,7 @@ fun MeditationDetailScreen(
                     modifier = Modifier.widthIn(max = 360.dp),
                 ) {
                     SessionControls(
-                        meditation, isPlaying, session, isFavorite, downloadStatus,
+                        meditation, isPlaying, isBuffering, session, isFavorite, downloadStatus,
                         onLengthSelect, onPlayClick, onFavoriteToggle, onDownloadClick, gap = 0.6f,
                     )
                 }
@@ -156,7 +165,7 @@ fun MeditationDetailScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Spacer(Modifier.height((36 * gap).dp))
                         SessionControls(
-                            meditation, isPlaying, session, isFavorite, downloadStatus,
+                            meditation, isPlaying, isBuffering, session, isFavorite, downloadStatus,
                             onLengthSelect, onPlayClick, onFavoriteToggle, onDownloadClick, gap,
                         )
                     }
@@ -207,11 +216,15 @@ private enum class OrbSlot { Header, Orb, Controls }
 
 private val OrbBreathingRoom = 12.dp
 
+/** Yükleme halkası, bekleme bu kadar sürerse gösterilir. */
+private const val LoadingRingDelayMillis = 400L
+
 /** Başlık, kalan süre, süre seçimi ve oynat düğmesi; [gap] aralıkları kısa ekranlarda daraltır. */
 @Composable
 private fun SessionControls(
     meditation: Meditation,
     isPlaying: Boolean,
+    isBuffering: Boolean,
     session: SessionState,
     isFavorite: Boolean,
     downloadStatus: AudioStatus?,
@@ -242,21 +255,38 @@ private fun SessionControls(
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             // Sesi olmayan meditasyonda indirme düğmesinin yeri boş kalır; oynat düğmesi ortada durur.
             if (hasAudio) DownloadButton(downloadStatus, onDownloadClick) else Spacer(Modifier.size(48.dp))
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(64.dp)
-                    .alpha(if (hasAudio) 1f else 0.3f)
-                    .clip(CircleShape)
-                    .background(colors.accent)
-                    .clickable(enabled = hasAudio, role = Role.Button, onClick = onPlayClick),
-            ) {
-                Image(
-                    painter = painterResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play),
-                    contentDescription = stringResource(if (isPlaying) R.string.pause else R.string.play),
-                    colorFilter = ColorFilter.tint(colors.onAccent),
-                    modifier = Modifier.size(32.dp),
-                )
+            // Ses hızlı hazırlanırsa halka hiç çıkmaz; yalnızca bekleme uzayınca belirir.
+            var showLoading by remember { mutableStateOf(false) }
+            LaunchedEffect(isBuffering) {
+                if (isBuffering) delay(LoadingRingDelayMillis)
+                showLoading = isBuffering
+            }
+            val active = isPlaying || isBuffering
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(64.dp)) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .alpha(if (hasAudio) 1f else 0.3f)
+                        .clip(CircleShape)
+                        .background(colors.accent)
+                        .clickable(enabled = hasAudio, role = Role.Button, onClick = onPlayClick),
+                ) {
+                    Image(
+                        painter = painterResource(if (active) R.drawable.ic_pause else R.drawable.ic_play),
+                        contentDescription = stringResource(if (active) R.string.pause else R.string.play),
+                        colorFilter = ColorFilter.tint(colors.onAccent),
+                        modifier = Modifier.size(32.dp),
+                    )
+                }
+                if (showLoading) {
+                    // Düğmenin dışında dönen halka; yerleşimi büyütmez.
+                    CircularProgressIndicator(
+                        color = colors.accent,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.requiredSize(76.dp),
+                    )
+                }
             }
             FavoriteButton(isFavorite, onFavoriteToggle)
         }
@@ -338,6 +368,7 @@ private fun MeditationDetailScreenPreview() {
         MeditationDetailScreen(
             meditation = PreviewContent.meditations[3],
             isPlaying = true,
+            isBuffering = false,
             session = SessionState(lengthMs = 600_000, elapsedMs = 240_000),
             isFavorite = true,
             downloadStatus = AudioStatus.Downloaded,
