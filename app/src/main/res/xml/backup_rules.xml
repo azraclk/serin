@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android 11 ve öncesi için otomatik yedek. Yalnızca kullanıcının kendi verisi yedeklenir:
+    favoriler, seans geçmişi, nefes ritmi (serin_library), tema (serin_theme) ve seans süresi (player).
+
+    Bilerek dışarıda: indirilen sesler ve içerik önbelleği (filesDir; yeniden indirilir), Media3'ün
+    veritabanı (databases) ve hatırlatıcı ayarı (serin_reminder; yeni telefonda bildirim izni yeniden
+    verilmeden "açık" görünmesin diye kullanıcı yeniden açar).
+-->
+<full-backup-content>
+    <include domain="sharedpref" path="serin_library.xml" />
+    <include domain="sharedpref" path="serin_theme.xml" />
+    <include domain="sharedpref" path="player.xml" />
+</full-backup-content>
