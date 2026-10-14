@@ -11,8 +11,14 @@ import kotlinx.coroutines.launch
 
 private const val TickMillis = 200L
 private const val FadeInMillis = 3_000L
-private const val FadeOutMillis = 10_000L
+private const val ShortFadeOutMillis = 10_000L
+private const val LongFadeOutMillis = 30_000L
+private const val LongSessionMillis = 30 * 60_000L
 private const val MinuteMillis = 60_000L
+
+/** Uzun seanslar uykuya dalmaya yardım eder; ses daha yavaş kısılır. */
+internal fun fadeOutMillis(lengthMs: Long): Long =
+    if (lengthMs >= LongSessionMillis) LongFadeOutMillis else ShortFadeOutMillis
 
 /** Seansın dinlenen tam dakikası; seans süresini aşamaz. */
 internal fun listenedMinutes(elapsedMs: Long, lengthMs: Long): Int =
@@ -76,7 +82,7 @@ class SessionTimer(
             reset()
             return
         }
-        player.volume = minOf(1f, elapsedMs.toFloat() / FadeInMillis, (lengthMs - elapsedMs).toFloat() / FadeOutMillis)
+        player.volume = minOf(1f, elapsedMs.toFloat() / FadeInMillis, (lengthMs - elapsedMs).toFloat() / fadeOutMillis(lengthMs))
         // Ses seviyesi sık güncellenir ama ekran saniyede bir değişir; gereksiz yeniden çizimi önlemek için
         // süre saniyeye yuvarlanarak yayınlanır.
         val wholeSecondMs = elapsedMs / 1000 * 1000
