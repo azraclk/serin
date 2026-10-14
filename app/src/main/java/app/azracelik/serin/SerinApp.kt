@@ -163,7 +163,7 @@ fun SerinApp(
                                     onMeditationClick = { navController.navigate(Routes.meditationDetail(it)) },
                                     onStartClick = { meditation ->
                                         val isCurrent = playback.mediaId == meditation.id
-                                        if (!(isCurrent && playback.isPlaying)) playerViewModel.togglePlayback(meditation)
+                                        if (!(isCurrent && playback.isActive)) playerViewModel.togglePlayback(meditation)
                                         navController.navigate(Routes.meditationDetail(meditation))
                                     },
                                     onPostClick = { navController.navigate(Routes.blogPost(it)) },
@@ -188,6 +188,7 @@ fun SerinApp(
                                         MeditationDetailScreen(
                                             meditation = meditation,
                                             isPlaying = isCurrent && playback.isPlaying,
+                                            isBuffering = isCurrent && playback.isBuffering,
                                             // Başka bir meditasyonun seansı sürüyorsa bu ekran baştan gösterilir.
                                             session = if (isCurrent) playback.session else playback.session.copy(elapsedMs = 0),
                                             isFavorite = meditation.id in favorites,
@@ -230,7 +231,7 @@ fun SerinApp(
                     if (showMiniPlayer && sessionMeditation != null) {
                         MiniPlayer(
                             meditation = sessionMeditation,
-                            isPlaying = playback.isPlaying,
+                            isPlaying = playback.isActive,
                             session = playback.session,
                             onClick = { navController.navigate(Routes.meditationDetail(sessionMeditation)) },
                             onToggle = playerViewModel::toggleCurrent,
