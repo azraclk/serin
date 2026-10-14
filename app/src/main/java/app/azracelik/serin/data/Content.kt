@@ -14,6 +14,9 @@ data class SerinContent(
 
     fun meditation(id: String): Meditation? = meditations.find { it.id == id }
 
+    /** [ids]'deki meditasyonlar, içerikteki sırayla; içerikte olmayan id'ler atlanır. */
+    fun meditations(ids: Set<String>): List<Meditation> = meditations.filter { it.id in ids }
+
     fun blogPost(id: String): BlogPost? = blogPosts.find { it.id == id }
 
     /** JSON'daki dosya yollarını (görsel, ses, yazı) [baseUrl] ile tam adrese çevirir. */

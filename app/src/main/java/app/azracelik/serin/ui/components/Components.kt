@@ -1,6 +1,12 @@
 package app.azracelik.serin.ui.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -178,6 +184,26 @@ private fun ThemeToggleButton(toggle: ThemeToggle, modifier: Modifier = Modifier
                 drawLine(color, Offset(7f, 20.6f), Offset(17f, 20.6f), HorizonStroke, StrokeCap.Round)
             }
         }
+    }
+}
+
+/** Kalp düğmesi; kart ve detay ekranında bir meditasyonu favorilere ekler ya da çıkarır. */
+@Composable
+fun FavoriteButton(favorite: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = SerinTheme.colors
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .toggleable(value = favorite, role = Role.Checkbox, onValueChange = { onToggle() }),
+    ) {
+        Image(
+            painter = painterResource(if (favorite) R.drawable.ic_heart_filled else R.drawable.ic_heart),
+            contentDescription = stringResource(R.string.favorite),
+            colorFilter = ColorFilter.tint(if (favorite) colors.accent else colors.textSoft),
+            modifier = Modifier.size(26.dp),
+        )
     }
 }
 

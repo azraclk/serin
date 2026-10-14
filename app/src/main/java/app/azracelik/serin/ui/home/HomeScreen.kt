@@ -114,6 +114,7 @@ private val TwoPaneMaxWidth = 1200.dp
 fun HomeScreen(
     meditations: List<Meditation>,
     blogPosts: List<BlogPost>,
+    favorites: List<Meditation>,
     /** Daha önce dinlenmiş ve şu an seansı sürmeyen meditasyon; yoksa kart gösterilmez. */
     resume: Meditation?,
     sessionMinutes: Int,
@@ -131,7 +132,7 @@ fun HomeScreen(
 
     if (windowSize.width == WidthClass.Expanded) {
         TwoPaneHome(
-            greeting, pick, resumeCard, meditations, blogPosts, sessionMinutes,
+            greeting, pick, resumeCard, meditations, blogPosts, favorites, sessionMinutes,
             onMeditationClick, onStartClick, onPostClick, modifier,
         )
         return
@@ -151,7 +152,7 @@ fun HomeScreen(
             pick, resumeCard, sessionMinutes, onMeditationClick, onStartClick,
             Modifier.padding(horizontal = sidePadding),
         )
-        Browse(meditations, blogPosts, sidePadding, windowSize.useRail, onMeditationClick, onPostClick)
+        Browse(meditations, blogPosts, favorites, sidePadding, windowSize.useRail, onMeditationClick, onPostClick)
     }
 }
 
@@ -166,6 +167,7 @@ private fun TwoPaneHome(
     resume: Meditation?,
     meditations: List<Meditation>,
     blogPosts: List<BlogPost>,
+    favorites: List<Meditation>,
     sessionMinutes: Int,
     onMeditationClick: (Meditation) -> Unit,
     onStartClick: (Meditation) -> Unit,
@@ -205,7 +207,7 @@ private fun TwoPaneHome(
                         .verticalScroll(rememberScrollState())
                         .padding(bottom = contentBottomPadding()),
                 ) {
-                    Browse(meditations, blogPosts, PanePadding, true, onMeditationClick, onPostClick)
+                    Browse(meditations, blogPosts, favorites, PanePadding, true, onMeditationClick, onPostClick)
                 }
             }
         }
@@ -238,16 +240,22 @@ private fun Featured(
     }
 }
 
-/** Keşfet ve okuma bölümleri; her bölüm kendinden önce [SectionGap] boşluk bırakır. */
+/** Favoriler, keşfet ve okuma bölümleri; her bölüm kendinden önce [SectionGap] boşluk bırakır. */
 @Composable
 private fun Browse(
     meditations: List<Meditation>,
     blogPosts: List<BlogPost>,
+    favorites: List<Meditation>,
     sidePadding: Dp,
     wrapChips: Boolean,
     onMeditationClick: (Meditation) -> Unit,
     onPostClick: (BlogPost) -> Unit,
 ) {
+    if (favorites.isNotEmpty()) {
+        Spacer(Modifier.height(SectionGap))
+        SectionTitle(R.string.home_favorites, sidePadding)
+        MeditationChips(favorites, sidePadding, wrapChips, onMeditationClick)
+    }
     if (meditations.isNotEmpty()) {
         Spacer(Modifier.height(SectionGap))
         SectionTitle(R.string.home_explore, sidePadding)
@@ -484,6 +492,7 @@ private fun HomeScreenPreview() {
         HomeScreen(
             meditations = PreviewContent.meditations,
             blogPosts = PreviewContent.blogPosts,
+            favorites = PreviewContent.meditations.take(2),
             resume = PreviewContent.meditations[2],
             sessionMinutes = 10,
             onMeditationClick = {},
