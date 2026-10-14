@@ -1,11 +1,6 @@
 package app.azracelik.serin.ui.reminder
 
 import android.Manifest
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
-import androidx.lifecycle.compose.LifecycleResumeEffect
-import app.azracelik.serin.reminder.ReminderScheduler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -93,12 +88,6 @@ private fun ReminderDialog(reminder: ReminderPreference, onDismiss: () -> Unit) 
         initialMinute = reminder.settings.minute,
         is24Hour = true,
     )
-    // Ayarlardan dönünce izin verilmiş olabilir; her dönüşte yeniden bakılır.
-    var canScheduleExact by remember { mutableStateOf(ReminderScheduler.canScheduleExact(context)) }
-    LifecycleResumeEffect(Unit) {
-        canScheduleExact = ReminderScheduler.canScheduleExact(context)
-        onPauseOrDispose {}
-    }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         enabled = granted
         permissionDenied = !granted
@@ -144,16 +133,6 @@ private fun ReminderDialog(reminder: ReminderPreference, onDismiss: () -> Unit) 
                         style = SerinType.Caption.copy(color = colors.textMuted),
                         modifier = Modifier.fillMaxWidth(),
                     )
-                }
-                if (enabled && !canScheduleExact) {
-                    TextButton(
-                        onClick = {
-                            context.startActivity(
-                                Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.fromParts("package", context.packageName, null)),
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text(stringResource(R.string.reminder_exact), color = colors.accent) }
                 }
                 if (enabled) {
                     TimePicker(
