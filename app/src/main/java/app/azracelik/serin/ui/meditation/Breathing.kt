@@ -54,15 +54,22 @@ private val BreathEasing = CubicBezierEasing(0.45f, 0f, 0.55f, 1f)
 internal val OrbImageInset = 36.dp
 
 // Perde ve üstündeki yazı iki temada da aynıdır: görsel hep siyah-beyaz çizim olduğu için tema rengine
-// bağlanmaz. Görselin en parlak yerinde bile yazı 7,9:1 kontrastla okunur.
-private val VeilColor = Color(0xFF15131F).copy(alpha = 0.78f)
+// bağlanmaz.
+private val VeilColor = Color(0xFF15131F)
 private val VeilText = Color(0xFFF6EFD6)
+
+// Perdenin koyuluğu nefesle birlikte değişir: ciğerler boşken en koyu, doluyken en açık; böylece küre
+// büyürken resim de görünür. Görselin en parlak yerinde bile yazı açıkken 5,1:1, kapalıyken 8,5:1
+// kontrastla okunur; 0,66'nın altında 16sp'lik saniye satırı 4,5:1'in altına düşer.
+private const val VeilClosedAlpha = 0.8f
+private const val VeilOpenAlpha = 0.66f
 
 /**
  * [content] çalarken [pattern]'in ritminde hafifçe büyüyüp küçülür ve arkasında mor bir ışık yayılır:
  * nefes alırken büyür, tutarken olduğu yerde kalır, verirken küçülür. [showCue] açıksa görsel
  * koyulaşır ve evrenin adı ("Nefes al", "Tut", "Nefes ver") ile kalan saniye üstüne yazılır.
- * Duraklatılınca perde kalkar, küre yavaşça dinlenme hâline döner.
+ * Duraklatılınca perde kalkar, küre yavaşça dinlenme hâline döner. [haptics] verilirse her evre
+ * titreşimle de belirtilir.
  */
 @Composable
 fun BreathingGlow(
@@ -71,6 +78,7 @@ fun BreathingGlow(
     modifier: Modifier = Modifier,
     pattern: BreathingPattern = BreathingPattern.Calm,
     showCue: Boolean = false,
+    haptics: BreathHaptics? = null,
     content: @Composable () -> Unit,
 ) {
     val glow = SerinTheme.colors.accent
@@ -83,28 +91,34 @@ fun BreathingGlow(
     }
     var phase by remember { mutableStateOf<BreathPhase?>(null) }
     var secondsLeft by remember { mutableIntStateOf(0) }
-    // Perde evre sürdükçe iner, duraklatınca kalkar.
+    // Perde evre sürdükçe iner, duraklatınca kalkar; koyuluğu ayrıca nefesle birlikte oynar.
     val veil by animateFloatAsState(if (showCue && phase != null) 1f else 0f, tween(600), label = "breathVeil")
-    LaunchedEffect(isPlaying, animationsEnabled, pattern) {
+    LaunchedEffect(isPlaying, animationsEnabled, pattern, haptics) {
         if (isPlaying && animationsEnabled) {
-            while (true) {
-                for (step in pattern.steps) {
-                    phase = step.phase
-                    val millis = step.seconds * 1000
-                    coroutineScope {
-                        launch {
-                            for (second in step.seconds downTo 1) {
-                                secondsLeft = second
-                                delay(1000)
+            try {
+                while (true) {
+                    for (step in pattern.steps) {
+                        phase = step.phase
+                        haptics?.play(step.phase, step.seconds)
+                        val millis = step.seconds * 1000
+                        coroutineScope {
+                            launch {
+                                for (second in step.seconds downTo 1) {
+                                    secondsLeft = second
+                                    delay(1000)
+                                }
                             }
-                        }
-                        when (step.phase) {
-                            BreathPhase.Inhale -> breath.animateTo(1f, tween(millis, easing = BreathEasing))
-                            BreathPhase.Exhale -> breath.animateTo(0f, tween(millis, easing = BreathEasing))
-                            BreathPhase.HoldFull, BreathPhase.HoldEmpty -> delay(millis.toLong())
+                            when (step.phase) {
+                                BreathPhase.Inhale -> breath.animateTo(1f, tween(millis, easing = BreathEasing))
+                                BreathPhase.Exhale -> breath.animateTo(0f, tween(millis, easing = BreathEasing))
+                                BreathPhase.HoldFull, BreathPhase.HoldEmpty -> delay(millis.toLong())
+                            }
                         }
                     }
                 }
+            } finally {
+                // Duraklatılınca, ritim ya da titreşim ayarı değişince ya da ekrandan çıkılınca titreşim hemen kesilir.
+                haptics?.cancel()
             }
         } else {
             phase = null
@@ -145,7 +159,7 @@ fun BreathingGlow(
                 Modifier
                     .requiredSize(size - OrbImageInset)
                     .clip(CircleShape)
-                    .graphicsLayer { alpha = veil }
+                    .graphicsLayer { alpha = veil * (VeilClosedAlpha - (VeilClosedAlpha - VeilOpenAlpha) * breath.value) }
                     .background(VeilColor),
             )
         }
@@ -184,7 +198,7 @@ private fun BreathCue(phase: BreathPhase?, secondsLeft: Int, width: Dp, modifier
         }
         Text(
             text = stringResource(R.string.breath_seconds, secondsLeft),
-            style = SerinType.BreathSeconds.copy(color = VeilText.copy(alpha = 0.85f)),
+            style = SerinType.BreathSeconds.copy(color = VeilText),
         )
     }
 }

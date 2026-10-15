@@ -103,6 +103,7 @@ fun SerinApp(
     val history by libraryViewModel.history.collectAsStateWithLifecycle()
     val downloads by libraryViewModel.downloads.collectAsStateWithLifecycle()
     val breathingPattern by libraryViewModel.breathingPattern.collectAsStateWithLifecycle()
+    val breathingHaptics by libraryViewModel.breathingHaptics.collectAsStateWithLifecycle()
     val playback by playerViewModel.state.collectAsStateWithLifecycle()
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -199,7 +200,10 @@ fun SerinApp(
                                             onPlayClick = { playerViewModel.togglePlayback(meditation) },
                                             onFavoriteToggle = { libraryViewModel.toggleFavorite(meditation.id) },
                                             onDownloadClick = { libraryViewModel.toggleDownload(meditation) },
-                                            breathing = BreathingChoice(breathingPattern, libraryViewModel::selectBreathingPattern)
+                                            breathing = BreathingChoice(
+                                                breathingPattern, libraryViewModel::selectBreathingPattern,
+                                                breathingHaptics, libraryViewModel::setBreathingHaptics,
+                                            )
                                                 .takeIf { meditation.hasBreathingPattern },
                                         )
                                         playback.problem?.takeIf { isCurrent }?.let {

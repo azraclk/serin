@@ -57,8 +57,9 @@ enum class BreathingPattern(@StringRes val label: Int, val steps: List<BreathSte
 
 private const val PrefsName = "serin_library"
 private const val PatternKey = "breathing_pattern"
+private const val HapticsKey = "breathing_haptics"
 
-/** Kullanıcının seçtiği nefes ritmi. */
+/** Kullanıcının seçtiği nefes ritmi ve titreşim tercihi. */
 class BreathingPatternStore(context: Context) {
     private val prefs = context.getSharedPreferences(PrefsName, Context.MODE_PRIVATE)
 
@@ -68,5 +69,15 @@ class BreathingPatternStore(context: Context) {
     fun select(pattern: BreathingPattern) {
         _pattern.value = pattern
         prefs.edit { putString(PatternKey, pattern.name) }
+    }
+
+    private val _haptics = MutableStateFlow(prefs.getBoolean(HapticsKey, false))
+
+    /** Nefes evreleri titreşimle de belirtilsin mi; varsayılan kapalı. */
+    val haptics: StateFlow<Boolean> = _haptics.asStateFlow()
+
+    fun setHaptics(enabled: Boolean) {
+        _haptics.value = enabled
+        prefs.edit { putBoolean(HapticsKey, enabled) }
     }
 }

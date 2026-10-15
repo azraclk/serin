@@ -54,6 +54,7 @@ Nefesi.</string>
     <string name="breath_exhale">Nefes ver</string>
     <string name="breath_wait">Bekle</string>
     <string name="breath_seconds">%d sn</string>
+    <string name="breath_haptics">Titreşim</string>
     <string name="breath_calm">Sakin</string>
     <string name="breath_478">4-7-8</string>
     <string name="breath_box">Kutu</string>
