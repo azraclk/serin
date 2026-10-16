@@ -275,7 +275,7 @@ fun SerinApp(
                         }
                     }
 
-                    if (showMiniPlayer && sessionMeditation != null) {
+                    if (showMiniPlayer) {
                         MiniPlayer(
                             meditation = sessionMeditation,
                             isPlaying = playback.isActive,

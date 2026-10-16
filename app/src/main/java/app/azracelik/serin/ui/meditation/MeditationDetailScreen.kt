@@ -310,7 +310,7 @@ private fun SessionControls(
         )
         // Kısa ekranda yer kıt; açıklama saat ve düğmelere yer bıraksın diye gizlenir. Seans bitince aynı yerde
         // özet görünür, böylece sayfanın yerleşimi değişmez.
-        if (meditation.description != null && gap >= 0.6f) {
+        if ((meditation.description != null || finished) && gap >= 0.6f) {
             Spacer(Modifier.height(6.dp))
             Crossfade(
                 targetState = finished,
@@ -324,7 +324,7 @@ private fun SessionControls(
                     text = if (isFinished) {
                         stringResource(R.string.session_done_summary, session.lengthMinutes, weekMinutes)
                     } else {
-                        meditation.description
+                        meditation.description.orEmpty()
                     },
                     style = SerinType.Caption.copy(color = colors.textMuted, textAlign = TextAlign.Center),
                     maxLines = 2,
