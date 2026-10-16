@@ -4,6 +4,7 @@ import android.os.ParcelFileDescriptor
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -16,6 +17,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import app.azracelik.serin.playback.MeditationSession
 import app.azracelik.serin.playback.PlayerViewModel
+import app.azracelik.serin.ui.meditation.MeditationDetailTag
+import app.azracelik.serin.ui.meditation.SessionStartTag
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertFalse
@@ -73,7 +76,11 @@ class LibraryFeaturesTest {
     @After
     fun resetSessionLength() {
         val player = ViewModelProvider(rule.activity)[PlayerViewModel::class.java]
-        rule.runOnUiThread { player.setSessionLength(MeditationSession.DefaultLengthMinutes) }
+        rule.runOnUiThread {
+            player.setSessionLength(MeditationSession.DefaultLengthMinutes)
+            // Başlatılan seans sonraki testin ana sayfasını bozmasın.
+            player.stop()
+        }
     }
 
     private fun tab(label: String) = rule.onNode(hasContentDescription(label) and hasClickAction())
@@ -99,11 +106,24 @@ class LibraryFeaturesTest {
         waitFor("meditasyon listesi") { exists("farkındalık") && exists("çakra") }
     }
 
-    /** Listeden etiketi verilen meditasyonun detayını açar; detayda "20 dk" seçeneği bulunur. */
-    private fun openDetail(label: String) {
+    private fun existsTag(tag: String) = rule.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+
+    /** Listeden etiketi verilen meditasyona dokunur; süre seçim sayfası açılır ve "20 dk" seçeneği bulunur. */
+    private fun openSheet(label: String) {
         openMeditationList()
         rule.onAllNodesWithText(label).onFirst().performClick()
-        waitFor("$label detayı") { exists("20 dk") }
+        waitFor("$label süre seçimi") { existsTag(SessionStartTag) && exists("20 dk") }
+    }
+
+    private fun startFromSheet() {
+        rule.onNode(hasTestTag(SessionStartTag)).performClick()
+        waitFor("meditasyon detayı") { existsTag(MeditationDetailTag) }
+    }
+
+    /** Süre seçim sayfasından Başla ile dinleme sayfasına geçer. */
+    private fun openDetail(label: String) {
+        openSheet(label)
+        startFromSheet()
     }
 
     @Test
@@ -125,18 +145,22 @@ class LibraryFeaturesTest {
 
     @Test
     fun sessionLengths_includeThirtyAndSixtyMinutes() {
-        openDetail("farkındalık")
+        openSheet("farkındalık")
         assertTrue(exists("30 dk"))
         assertTrue(exists("60 dk"))
 
         rule.onAllNodesWithText("60 dk").onFirst().performClick()
+        startFromSheet()
         waitFor("60 dakikalık saat") { exists("60:00") }
+        // Dinleme sayfasında süre seçilmez.
+        assertFalse(exists("30 dk"))
     }
 
     @Test
     fun breathingRhythmPicker_showsOnlyOnTheBreathingMeditation() {
-        openDetail("farkındalık")
+        openSheet("farkındalık")
         assertFalse("Nefes dışı meditasyonda ritim seçici olmamalı", exists("4-7-8"))
+        startFromSheet()
 
         tab("Meditasyon").performClick()
         waitFor("meditasyon listesi") { exists("çakra") }
@@ -146,6 +170,10 @@ class LibraryFeaturesTest {
         assertTrue("Varsayılan ritim Sakin", rule.onAllNodes(hasText("Sakin") and isSelected()).fetchSemanticsNodes().isNotEmpty())
         rule.onAllNodesWithText("4-7-8").onFirst().performClick()
         waitFor("4-7-8 seçimi") { rule.onAllNodes(hasText("4-7-8") and isSelected()).fetchSemanticsNodes().isNotEmpty() }
+
+        startFromSheet()
+        // Seçici yalnızca süre seçim sayfasındadır.
+        assertFalse(exists("4-7-8"))
     }
 
     @Test

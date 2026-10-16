@@ -20,6 +20,14 @@ private const val MinuteMillis = 60_000L
 internal fun fadeOutMillis(lengthMs: Long): Long =
     if (lengthMs >= LongSessionMillis) LongFadeOutMillis else ShortFadeOutMillis
 
+/**
+ * Seansın [elapsedMs] anındaki ses seviyesi (0..1): başta [FadeInMillis]'te yavaşça açılır, sonda kısılarak biter.
+ * Dinleme sayfasındaki ışık da aynı eğriyi izler; ses ile görüntü birlikte açılıp kapanır.
+ */
+internal fun sessionVolume(elapsedMs: Long, lengthMs: Long): Float =
+    minOf(1f, elapsedMs.toFloat() / FadeInMillis, (lengthMs - elapsedMs).toFloat() / fadeOutMillis(lengthMs))
+        .coerceAtLeast(0f)
+
 /** Seansın dinlenen tam dakikası; seans süresini aşamaz. */
 internal fun listenedMinutes(elapsedMs: Long, lengthMs: Long): Int =
     (minOf(elapsedMs, lengthMs) / MinuteMillis).toInt()
@@ -57,6 +65,7 @@ class SessionTimer(
     override fun onIsPlayingChanged(isPlaying: Boolean) {
         ticker?.cancel()
         if (!isPlaying) return
+        MeditationSession.setCompleted(false)
         ticker = scope.launch {
             var last = SystemClock.elapsedRealtime()
             while (isActive) {
@@ -80,9 +89,11 @@ class SessionTimer(
             player.pause()
             player.seekTo(0)
             reset()
+            // Sayfa, seansın bittiğini sessizce söyleyebilsin diye; reset() bayrağı temizler.
+            MeditationSession.setCompleted(true)
             return
         }
-        player.volume = minOf(1f, elapsedMs.toFloat() / FadeInMillis, (lengthMs - elapsedMs).toFloat() / fadeOutMillis(lengthMs))
+        player.volume = sessionVolume(elapsedMs, lengthMs)
         // Ses seviyesi sık güncellenir ama ekran saniyede bir değişir; gereksiz yeniden çizimi önlemek için
         // süre saniyeye yuvarlanarak yayınlanır.
         val wholeSecondMs = elapsedMs / 1000 * 1000
@@ -95,5 +106,6 @@ class SessionTimer(
         // Yeni seans sessizden başlar; ses ilk saniyelerde açılır.
         player.volume = 0f
         MeditationSession.setElapsed(0)
+        MeditationSession.setCompleted(false)
     }
 }

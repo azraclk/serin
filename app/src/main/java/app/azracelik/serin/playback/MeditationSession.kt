@@ -10,9 +10,13 @@ private const val MinuteMillis = 60_000L
 data class SessionState(
     val lengthMs: Long,
     val elapsedMs: Long = 0,
+    /** Seans süresi doldu ve ses kendiliğinden durdu; yeni seans başlayınca ya da yeniden çalınınca kalkar. */
+    val completed: Boolean = false,
 ) {
     val lengthMinutes: Int get() = (lengthMs / MinuteMillis).toInt()
     val remainingMs: Long get() = (lengthMs - elapsedMs).coerceAtLeast(0)
+    /** Kalan süre, üste yuvarlanmış dakika olarak; son dakika da "1" sayılır. */
+    val remainingMinutes: Int get() = ((remainingMs + MinuteMillis - 1) / MinuteMillis).toInt()
     val progress: Float get() = if (lengthMs > 0) (elapsedMs.toFloat() / lengthMs).coerceIn(0f, 1f) else 0f
 }
 
@@ -31,4 +35,6 @@ object MeditationSession {
     fun setLength(minutes: Int) = _state.update { it.copy(lengthMs = minutes * MinuteMillis) }
 
     internal fun setElapsed(elapsedMs: Long) = _state.update { it.copy(elapsedMs = elapsedMs) }
+
+    internal fun setCompleted(completed: Boolean) = _state.update { it.copy(completed = completed) }
 }

@@ -4,6 +4,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onFirst
@@ -18,7 +19,11 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.lifecycle.ViewModelProvider
 import app.azracelik.serin.data.ContentBaseUrl
 import app.azracelik.serin.data.Meditation
+import app.azracelik.serin.playback.MeditationSession
 import app.azracelik.serin.playback.PlayerViewModel
+import app.azracelik.serin.ui.meditation.MeditationDetailTag
+import app.azracelik.serin.ui.meditation.SessionStartTag
+import android.view.KeyEvent
 import android.os.ParcelFileDescriptor
 import org.junit.After
 import org.junit.AfterClass
@@ -66,7 +71,10 @@ class NavigationTest {
     private fun exists(text: String) = rule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
 
     private val onHome get() = exists("Keşfet")
-    private val onDetail get() = exists("20 dk")
+    private fun existsTag(tag: String) = rule.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+
+    private val onDetail get() = existsTag(MeditationDetailTag)
+    private val onSheet get() = existsTag(SessionStartTag)
     private val onMeditationList get() = !onHome && !onDetail && exists("farkındalık") && exists("çakra")
     private val onBlogList get() = !onHome && !onDetail && exists("21 Günde Farkındalık Alışkanlığı Planı")
     private val onPost get() = !onHome && !onDetail && !onBlogList && exists("Meditasyonun Tarihi: Geçmişten Bugüne")
@@ -95,17 +103,24 @@ class NavigationTest {
         rule.onAllNodesWithText("Meditasyonun Tarihi: Geçmişten Bugüne").onFirst().performClick()
     }
 
+    /** Süre seçim sayfasında Başla'ya basar; dinleme sayfası açılır. */
+    private fun startFromSheet() {
+        waitFor("süre seçim sayfası") { onSheet }
+        rule.onNode(hasTestTag(SessionStartTag)).performClick()
+        waitFor("meditasyon detayı") { onDetail }
+    }
+
     private fun openDetailFromHome() {
         awaitHome()
         rule.onAllNodesWithText("farkındalık").onFirst().performClick()
-        waitFor("meditasyon detayı") { onDetail }
+        startFromSheet()
     }
 
     private fun openDetailFromList() {
         tab("Meditasyon").performClick()
         waitFor("meditasyon listesi") { onMeditationList }
         rule.onAllNodesWithText("farkındalık").onFirst().performClick()
-        waitFor("meditasyon detayı") { onDetail }
+        startFromSheet()
     }
 
     @Test
@@ -250,6 +265,23 @@ class NavigationTest {
     }
 
     @Test
+    fun session_finishedSessionShowsTheClosingNote() {
+        awaitHome()
+        startSession()
+        waitFor("mini player") { miniPlayerVisible() }
+        rule.onAllNodesWithText("İçsel Dinginlik").onFirst().performClick()
+        waitFor("meditasyon detayı") { onDetail }
+        assertTrue(!exists("Tamamlandı"))
+
+        rule.runOnUiThread { MeditationSession.setCompleted(true) }
+        waitFor("bitiş notu") { exists("Tamamlandı") }
+
+        // Yeniden çalınınca not kalkar; saat geri gelir.
+        rule.runOnUiThread { MeditationSession.setCompleted(false) }
+        waitFor("bitiş notu kalktı") { !exists("Tamamlandı") }
+    }
+
+    @Test
     fun session_miniPlayerCloseEndsSession() {
         awaitHome()
         startSession()
@@ -260,15 +292,38 @@ class NavigationTest {
     }
 
     @Test
-    fun session_otherMeditationDetail_keepsMiniPlayerAndTabsWork() {
+    fun session_otherMeditation_sheetKeepsMiniPlayer_andStartingReplacesTheSession() {
         awaitHome()
         startSession()
         tab("Meditasyon").performClick()
         waitFor("meditasyon listesi") { onMeditationList }
         rule.onAllNodesWithText("nefes").onFirst().performClick()
-        waitFor("başka meditasyon detayı") { onDetail }
-        waitFor("mini player") { miniPlayerVisible() }
+        waitFor("süre seçim sayfası") { onSheet }
+        // Başka bir meditasyonun seçimi açıkken eski seans (ve mini player) yerinde durur.
+        assertTrue(miniPlayerVisible())
+        assertTrue(player.state.value.mediaId == "mindfulness")
+
+        startFromSheet()
+        // Başla seansı yenisiyle değiştirir; yeni seans kendi dinleme sayfasındadır, mini player görünmez.
+        waitFor("yeni seans") { player.state.value.mediaId == "breathing" }
+        assertTrue(!miniPlayerVisible())
         tab("Ana Sayfa").performClick()
         waitFor("Ana Sayfa") { onHome }
+        waitFor("mini player") { miniPlayerVisible() }
+    }
+
+    @Test
+    fun sheet_dismissingItStartsNothing() {
+        awaitHome()
+        tab("Meditasyon").performClick()
+        waitFor("meditasyon listesi") { onMeditationList }
+        rule.onAllNodesWithText("farkındalık").onFirst().performClick()
+        waitFor("süre seçim sayfası") { onSheet }
+
+        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        waitFor("sayfanın kapanması") { !onSheet }
+        assertTrue(onMeditationList)
+        assertTrue(!miniPlayerVisible())
+        assertTrue(player.state.value.mediaId == null)
     }
 }

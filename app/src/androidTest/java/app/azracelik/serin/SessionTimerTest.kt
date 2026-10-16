@@ -132,5 +132,14 @@ class SessionTimerTest {
         assertFalse(readMain { player.isPlaying })
         assertEquals("Ses başa sarılmalı", 0L, readMain { player.currentPosition })
         assertEquals("Seans sıfırlanmalı", 0L, MeditationSession.state.value.elapsedMs)
+        assertTrue("Seansın bittiği bildirilmeli", MeditationSession.state.value.completed)
+
+        // Yeniden çalınca bitiş durumu kalkar.
+        onMain { player.play() }
+        val restart = System.currentTimeMillis() + 5_000
+        while (MeditationSession.state.value.completed) {
+            assertTrue("Yeniden çalınca bitiş durumu kalkmalı", System.currentTimeMillis() < restart)
+            Thread.sleep(50)
+        }
     }
 }
