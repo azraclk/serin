@@ -49,10 +49,14 @@ import app.azracelik.serin.ui.theme.SerinType
 enum class SerinTab(
     @StringRes val label: Int,
     @DrawableRes val icon: Int,
+    /** Sekme seçiliyken çizgili ikonun yerine bu gösterilir. */
+    @DrawableRes val iconFilled: Int,
 ) {
-    Home(R.string.nav_home, R.drawable.ic_home),
-    Meditation(R.string.nav_meditation, R.drawable.ic_meditation),
-    Blog(R.string.nav_blog, R.drawable.ic_blog),
+    Home(R.string.nav_home, R.drawable.ic_home, R.drawable.ic_home_filled),
+    Meditation(R.string.nav_meditation, R.drawable.ic_meditation, R.drawable.ic_meditation_filled),
+    Blog(R.string.nav_blog, R.drawable.ic_blog, R.drawable.ic_blog_filled);
+
+    fun icon(selected: Boolean): Int = if (selected) iconFilled else icon
 }
 
 private val BarHeight = 64.dp
@@ -121,7 +125,7 @@ fun SerinBottomBar(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Image(
-                            painter = painterResource(tab.icon),
+                            painter = painterResource(tab.icon(isSelected)),
                             contentDescription = stringResource(tab.label),
                             colorFilter = ColorFilter.tint(colors.onBar),
                             modifier = Modifier.size(IconSize),
@@ -184,7 +188,7 @@ fun SerinNavigationRail(
                     .padding(horizontal = 2.dp, vertical = 8.dp),
             ) {
                 Image(
-                    painter = painterResource(tab.icon),
+                    painter = painterResource(tab.icon(isSelected)),
                     contentDescription = stringResource(tab.label),
                     colorFilter = ColorFilter.tint(colors.onBar),
                     modifier = Modifier.size(IconSize),
