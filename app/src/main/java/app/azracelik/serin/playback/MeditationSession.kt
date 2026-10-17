@@ -15,8 +15,8 @@ data class SessionState(
 ) {
     val lengthMinutes: Int get() = (lengthMs / MinuteMillis).toInt()
     val remainingMs: Long get() = (lengthMs - elapsedMs).coerceAtLeast(0)
-    /** Kalan süre, üste yuvarlanmış dakika olarak; son dakika da "1" sayılır. */
-    val remainingMinutes: Int get() = ((remainingMs + MinuteMillis - 1) / MinuteMillis).toInt()
+    /** Kalan süre, tam dakika olarak aşağı yuvarlanır: 9:40 kalmışsa 9, son dakikada 0. */
+    val remainingMinutes: Int get() = (remainingMs / MinuteMillis).toInt()
     val progress: Float get() = if (lengthMs > 0) (elapsedMs.toFloat() / lengthMs).coerceIn(0f, 1f) else 0f
 }
 
