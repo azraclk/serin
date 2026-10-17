@@ -29,12 +29,16 @@ class SessionStateTest {
     }
 
     @Test
-    fun remainingMinutesRoundUp() {
+    fun remainingMinutesRoundDown() {
         assertEquals(10, SessionState(lengthMs = 600_000).remainingMinutes)
-        assertEquals(10, SessionState(lengthMs = 600_000, elapsedMs = 1_000).remainingMinutes)
+        // 9:59 ve 9:40 kalmışken 10 değil 9.
+        assertEquals(9, SessionState(lengthMs = 600_000, elapsedMs = 1_000).remainingMinutes)
+        assertEquals(9, SessionState(lengthMs = 600_000, elapsedMs = 20_000).remainingMinutes)
         assertEquals(9, SessionState(lengthMs = 600_000, elapsedMs = 60_000).remainingMinutes)
-        // Son dakika "1" sayılır; süre dolunca 0.
-        assertEquals(1, SessionState(lengthMs = 600_000, elapsedMs = 599_000).remainingMinutes)
+        assertEquals(8, SessionState(lengthMs = 600_000, elapsedMs = 61_000).remainingMinutes)
+        // Son dakika ve süre dolunca 0.
+        assertEquals(1, SessionState(lengthMs = 600_000, elapsedMs = 539_000).remainingMinutes)
+        assertEquals(0, SessionState(lengthMs = 600_000, elapsedMs = 599_000).remainingMinutes)
         assertEquals(0, SessionState(lengthMs = 600_000, elapsedMs = 600_000).remainingMinutes)
         assertEquals(0, SessionState(lengthMs = 300_000, elapsedMs = 400_000).remainingMinutes)
     }
