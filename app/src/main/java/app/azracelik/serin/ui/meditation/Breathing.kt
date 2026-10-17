@@ -69,7 +69,7 @@ private const val VeilOpenAlpha = 0.66f
  * nefes alırken büyür, tutarken olduğu yerde kalır, verirken küçülür. [showCue] açıksa görsel
  * koyulaşır ve evrenin adı ("Nefes al", "Tut", "Nefes ver") ile kalan saniye üstüne yazılır.
  * Duraklatılınca perde kalkar, küre yavaşça dinlenme hâline döner. [haptics] verilirse her evre
- * titreşimle de belirtilir.
+ * titreşimle de belirtilir. [light] ışığın yoğunluğunu ölçekler.
  */
 @Composable
 fun BreathingGlow(
@@ -79,6 +79,8 @@ fun BreathingGlow(
     pattern: BreathingPattern = BreathingPattern.Calm,
     showCue: Boolean = false,
     haptics: BreathHaptics? = null,
+    /** Işığın yoğunluğu (0..1); seansın ses seviyesini izlerse ışık sesle birlikte açılıp kısılır. */
+    light: Float = 1f,
     content: @Composable () -> Unit,
 ) {
     val glow = SerinTheme.colors.accent
@@ -135,7 +137,7 @@ fun BreathingGlow(
                     val value = breath.value
                     scaleX = 1f + 0.1f * value
                     scaleY = scaleX
-                    alpha = presence.value * (0.35f + 0.65f * value)
+                    alpha = presence.value * light * (0.35f + 0.65f * value)
                 }
                 .background(
                     // Görselin kenarına kadar dolu, dışarı doğru kaybolur.
@@ -205,7 +207,7 @@ private fun BreathCue(phase: BreathPhase?, secondsLeft: Int, width: Dp, modifier
 
 /** Telefonun erişilebilirlik ayarlarında animasyonlar kapatıldıysa false döner. */
 @Composable
-private fun rememberAnimationsEnabled(): Boolean {
+internal fun rememberAnimationsEnabled(): Boolean {
     val resolver = LocalContext.current.contentResolver
     return remember(resolver) {
         Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) != 0f

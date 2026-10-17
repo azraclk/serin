@@ -93,7 +93,8 @@ object SerinType {
 
     // Seans süresi ve mini player.
     val SessionChip = Base.copy(fontSize = 14.sp, letterSpacing = 0.5.sp)
-    val SessionClock = Light.copy(fontSize = 44.sp, letterSpacing = 1.sp)
+    // Sabit genişlikli rakamlar: saniyeler değişirken saat sağa sola kaymaz.
+    val SessionClock = Light.copy(fontSize = 44.sp, letterSpacing = 1.sp, fontFeatureSettings = "tnum")
     val SessionTime = Base.copy(fontSize = 12.sp, letterSpacing = 0.6.sp)
     val MiniTitle = Base.copy(fontSize = 16.sp, lineHeight = 20.sp)
 }

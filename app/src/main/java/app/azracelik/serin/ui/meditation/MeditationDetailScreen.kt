@@ -1,12 +1,14 @@
 package app.azracelik.serin.ui.meditation
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -19,13 +21,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,14 +37,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -51,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.azracelik.serin.R
 import app.azracelik.serin.data.Meditation
 import app.azracelik.serin.ui.adaptive.LocalWindowSize
@@ -58,13 +61,12 @@ import app.azracelik.serin.data.PreviewContent
 import app.azracelik.serin.data.bundledImage
 import app.azracelik.serin.data.AudioStatus
 import app.azracelik.serin.data.BreathingPattern
-import app.azracelik.serin.ui.components.CardShape
 import app.azracelik.serin.ui.components.DownloadButton
 import app.azracelik.serin.ui.components.FavoriteButton
 import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.components.SerinHeader
-import app.azracelik.serin.playback.MeditationSession
 import app.azracelik.serin.playback.SessionState
+import app.azracelik.serin.playback.sessionVolume
 import app.azracelik.serin.ui.components.contentBottomPadding
 import app.azracelik.serin.ui.components.formatDuration
 import app.azracelik.serin.ui.components.AdaptivePreviews
@@ -72,6 +74,9 @@ import app.azracelik.serin.ui.components.PreviewWindow
 import app.azracelik.serin.ui.components.SerinTab
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
+
+/** Dinleme sayfasının sınama etiketi; süre artık burada seçilmediği için sayfayı başka bir şey ayırt etmez. */
+const val MeditationDetailTag = "meditationDetail"
 
 /** Küre (en çok 260dp), aralık (56dp) ve kontroller (en çok 360dp) yan yana sığsın diye gereken genişlik. */
 private val SideBySideMinWidth = 560.dp
@@ -84,27 +89,54 @@ fun MeditationDetailScreen(
     session: SessionState,
     isFavorite: Boolean,
     downloadStatus: AudioStatus?,
-    onLengthSelect: (Int) -> Unit,
     onPlayClick: () -> Unit,
     onFavoriteToggle: () -> Unit,
     onDownloadClick: () -> Unit,
     modifier: Modifier = Modifier,
     /** Yalnızca nefes meditasyonunda verilir: seçili ritim ve seçici. */
     breathing: BreathingChoice? = null,
+    /** Sessiz modda başlık ve düğmeler soluklaşır, süre yalnızca dakika olarak görünür. */
+    quiet: Boolean = false,
+    /** Bu hafta dinlenen dakika; seans bitince özet satırında gösterilir. */
+    weekMinutes: Int = 0,
 ) {
     val windowSize = LocalWindowSize.current
     val colors = SerinTheme.colors
+    val chrome = animateFloatAsState(if (quiet) 0f else 1f, tween(QuietFadeMillis), label = "chrome")
+    // Işık sesle birlikte açılıp kısılır. Süre saniyede bir güncellendiği için bir saniye ilerisi hedeflenir,
+    // doğrusal geçiş de tam o saniyede biter.
+    val light by animateFloatAsState(
+        targetValue = if (isPlaying) {
+            sessionVolume(minOf(session.elapsedMs + LightLeadMillis, session.lengthMs), session.lengthMs)
+        } else {
+            0f
+        },
+        animationSpec = tween(LightLeadMillis.toInt(), easing = LinearEasing),
+        label = "light",
+    )
+    val finished = session.completed && !isPlaying
+    // Halka da ışık gibi saniyede bir değil akıcı ilerler: bir sonraki saniyeye doğru doğrusal gider.
+    val ringProgress by animateFloatAsState(
+        targetValue = when {
+            finished -> 1f
+            isPlaying -> minOf(session.elapsedMs + LightLeadMillis, session.lengthMs).toFloat() / session.lengthMs.coerceAtLeast(1)
+            else -> session.progress
+        },
+        animationSpec = tween(LightLeadMillis.toInt(), easing = LinearEasing),
+        label = "ring",
+    )
     val haptics = rememberBreathHaptics(enabled = breathing?.haptics == true)
     val pageModifier = modifier
         .fillMaxSize()
         .background(colors.background)
+        .testTag(MeditationDetailTag)
 
     // Küre ve kontroller yan yana ancak yeterli genişlik varsa sığar; yoksa alt alta dizilir ve kayar.
     if (windowSize.isLandscapeShort && windowSize.contentWidth >= SideBySideMinWidth) {
         // Yatay telefon: dikey alan kıt, yatay alan bol; küre solda, kontroller sağda durur.
         val orbSize = (windowSize.windowHeight - 140.dp).coerceIn(150.dp, 260.dp)
         Column(pageModifier) {
-            SerinHeader()
+            SerinHeader(Modifier.graphicsLayer { alpha = chrome.value })
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(56.dp, Alignment.CenterHorizontally),
@@ -120,8 +152,9 @@ fun MeditationDetailScreen(
                     pattern = breathing?.selected ?: BreathingPattern.Calm,
                     showCue = breathing != null,
                     haptics = haptics,
+                    light = light,
                 ) {
-                    MoonOrb(meditation = meditation, progress = session.progress, orbSize = orbSize)
+                    MoonOrb(meditation = meditation, progress = ringProgress, orbSize = orbSize)
                 }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -129,7 +162,7 @@ fun MeditationDetailScreen(
                 ) {
                     SessionControls(
                         meditation, isPlaying, isBuffering, session, isFavorite, downloadStatus,
-                        onLengthSelect, onPlayClick, onFavoriteToggle, onDownloadClick, breathing, gap = 0.6f,
+                        onPlayClick, onFavoriteToggle, onDownloadClick, quiet, finished, weekMinutes, chrome, gap = 0.6f,
                     )
                 }
             }
@@ -166,7 +199,7 @@ fun MeditationDetailScreen(
                 orbMaxWidth = windowSize.contentWidth - 40.dp,
                 header = {
                     Column {
-                        SerinHeader()
+                        SerinHeader(Modifier.graphicsLayer { alpha = chrome.value })
                         Spacer(Modifier.height((40 * gap).dp))
                     }
                 },
@@ -176,9 +209,10 @@ fun MeditationDetailScreen(
                         size = orbSize,
                         pattern = breathing?.selected ?: BreathingPattern.Calm,
                         showCue = breathing != null,
-                    haptics = haptics,
+                        haptics = haptics,
+                        light = light,
                     ) {
-                        MoonOrb(meditation = meditation, progress = session.progress, orbSize = orbSize)
+                        MoonOrb(meditation = meditation, progress = ringProgress, orbSize = orbSize)
                     }
                 },
                 controls = {
@@ -186,7 +220,7 @@ fun MeditationDetailScreen(
                         Spacer(Modifier.height((36 * gap).dp))
                         SessionControls(
                             meditation, isPlaying, isBuffering, session, isFavorite, downloadStatus,
-                            onLengthSelect, onPlayClick, onFavoriteToggle, onDownloadClick, breathing, gap,
+                            onPlayClick, onFavoriteToggle, onDownloadClick, quiet, finished, weekMinutes, chrome, gap,
                         )
                     }
                 },
@@ -234,12 +268,17 @@ private fun OrbLayout(
 
 private enum class OrbSlot { Header, Orb, Controls }
 
+private enum class ClockMode { Full, Quiet, Done }
+
 private val OrbBreathingRoom = 12.dp
+
+/** Işık, ses seviyesinin bu kadar ilerisini hedefler (süre saniyede bir güncellenir). */
+private const val LightLeadMillis = 1_000L
 
 /** Yükleme halkası, bekleme bu kadar sürerse gösterilir. */
 private const val LoadingRingDelayMillis = 400L
 
-/** Başlık, kalan süre, süre seçimi ve oynat düğmesi; [gap] aralıkları kısa ekranlarda daraltır. */
+/** Başlık, kalan süre ve oynat düğmesi; [gap] aralıkları kısa ekranlarda daraltır. */
 @Composable
 private fun SessionControls(
     meditation: Meditation,
@@ -248,11 +287,13 @@ private fun SessionControls(
     session: SessionState,
     isFavorite: Boolean,
     downloadStatus: AudioStatus?,
-    onLengthSelect: (Int) -> Unit,
     onPlayClick: () -> Unit,
     onFavoriteToggle: () -> Unit,
     onDownloadClick: () -> Unit,
-    breathing: BreathingChoice?,
+    quiet: Boolean,
+    finished: Boolean,
+    weekMinutes: Int,
+    chrome: State<Float>,
     gap: Float,
 ) {
     val hasAudio = meditation.audio != null
@@ -263,34 +304,67 @@ private fun SessionControls(
             style = SerinType.DetailTitle,
             // Başlıklar içerikten geldiği için uzun olanlar ikinci satıra geçer.
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 24.dp),
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .graphicsLayer { alpha = 0.55f + 0.45f * chrome.value },
         )
-        // Kısa ekranda yer kıt; açıklama saat ve düğmelere yer bıraksın diye gizlenir.
-        if (meditation.description != null && gap >= 0.6f) {
+        // Kısa ekranda yer kıt; açıklama saat ve düğmelere yer bıraksın diye gizlenir. Seans bitince aynı yerde
+        // özet görünür, böylece sayfanın yerleşimi değişmez.
+        if ((meditation.description != null || finished) && gap >= 0.6f) {
             Spacer(Modifier.height(6.dp))
-            Text(
-                text = meditation.description,
-                style = SerinType.Caption.copy(color = colors.textMuted, textAlign = TextAlign.Center),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 32.dp),
-            )
+            Crossfade(
+                targetState = finished,
+                animationSpec = tween(QuietFadeMillis),
+                label = "note",
+                modifier = Modifier
+                    .padding(horizontal = 32.dp)
+                    .graphicsLayer { alpha = chrome.value },
+            ) { isFinished ->
+                Text(
+                    text = if (isFinished) {
+                        stringResource(R.string.session_done_summary, session.lengthMinutes, weekMinutes)
+                    } else {
+                        meditation.description.orEmpty()
+                    },
+                    style = SerinType.Caption.copy(color = colors.textMuted, textAlign = TextAlign.Center),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
         Spacer(Modifier.height(8.dp))
-        Text(
-            text = formatDuration(session.remainingMs),
-            style = SerinType.SessionClock.copy(color = colors.textMuted),
-        )
-        Spacer(Modifier.height((28 * gap).dp))
-        SessionLengthPicker(selected = session.lengthMinutes, onSelect = onLengthSelect)
-        if (breathing != null) {
-            Spacer(Modifier.height((16 * gap).dp))
-            BreathingPatternPicker(breathing)
+        // Saniyeler her saniye göz çeker; sessiz modda yalnızca kalan dakika görünür. Seans bitince saatin
+        // yerinde "Tamamlandı" yazar.
+        val clock = when {
+            finished -> ClockMode.Done
+            quiet -> ClockMode.Quiet
+            else -> ClockMode.Full
+        }
+        Crossfade(targetState = clock, animationSpec = tween(QuietFadeMillis), label = "clock") { mode ->
+            when (mode) {
+                ClockMode.Done -> Text(
+                    text = stringResource(R.string.session_done),
+                    style = SerinType.SessionClock.copy(color = colors.accent, fontSize = 36.sp),
+                    maxLines = 1,
+                )
+                ClockMode.Quiet -> Text(
+                    text = stringResource(R.string.session_minutes, session.remainingMinutes),
+                    style = SerinType.SessionClock.copy(color = colors.textMuted),
+                )
+                ClockMode.Full -> Text(
+                    text = formatDuration(session.remainingMs),
+                    style = SerinType.SessionClock.copy(color = colors.textMuted),
+                )
+            }
         }
         Spacer(Modifier.height((28 * gap).dp))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             // Sesi olmayan meditasyonda indirme düğmesinin yeri boş kalır; oynat düğmesi ortada durur.
-            if (hasAudio) DownloadButton(downloadStatus, onDownloadClick) else Spacer(Modifier.size(48.dp))
+            if (hasAudio) {
+                DownloadButton(downloadStatus, onDownloadClick, Modifier.graphicsLayer { alpha = chrome.value })
+            } else {
+                Spacer(Modifier.size(48.dp))
+            }
             // Ses hızlı hazırlanırsa halka hiç çıkmaz; yalnızca bekleme uzayınca belirir.
             var showLoading by remember { mutableStateOf(false) }
             LaunchedEffect(isBuffering) {
@@ -298,7 +372,11 @@ private fun SessionControls(
                 showLoading = isBuffering
             }
             val active = isPlaying || isBuffering
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(64.dp)) {
+            // Duraklat düğmesi sessiz modda da silik görünür; yeri bilinsin diye tamamen kaybolmaz.
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(64.dp).graphicsLayer { alpha = 0.3f + 0.7f * chrome.value },
+            ) {
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
@@ -324,26 +402,39 @@ private fun SessionControls(
                     )
                 }
             }
-            FavoriteButton(isFavorite, onFavoriteToggle)
+            FavoriteButton(isFavorite, onFavoriteToggle, Modifier.graphicsLayer { alpha = chrome.value })
         }
     }
 }
 
-/** Meditasyon görseli yuvarlak bir ay gibi durur; çevresindeki halka seansın ilerlemesini gösterir. */
+/**
+ * Meditasyon görseli yuvarlak bir ay gibi durur; çevresindeki ince halka seansın ilerlemesini gösterir.
+ * Halkanın ucunda küçük bir ay noktası durur; ilerleme yalnızca o noktanın yerinden okunur.
+ */
 @Composable
 private fun MoonOrb(meditation: Meditation, progress: Float, orbSize: Dp) {
     val colors = SerinTheme.colors
     Box(contentAlignment = Alignment.Center, modifier = Modifier.size(orbSize)) {
         Canvas(Modifier.fillMaxSize()) {
-            val stroke = 3.dp.toPx()
-            val inset = stroke / 2
-            val arcSize = Size(size.width - stroke, size.height - stroke)
+            val stroke = 2.dp.toPx()
+            val headRadius = 4.dp.toPx()
+            // Uçtaki nokta halkanın dışına taşmasın diye halka içeri çekilir.
+            val inset = headRadius
+            val arcSize = Size(size.width - 2 * inset, size.height - 2 * inset)
             drawArc(colors.outline, 0f, 360f, false, Offset(inset, inset), arcSize, style = Stroke(stroke))
             if (progress > 0f) {
                 drawArc(
                     colors.accent, -90f, 360f * progress, false, Offset(inset, inset), arcSize,
                     style = Stroke(stroke, cap = StrokeCap.Round),
                 )
+                val angle = Math.toRadians((-90f + 360f * progress).toDouble())
+                val radius = arcSize.width / 2
+                val head = Offset(
+                    center.x + radius * kotlin.math.cos(angle).toFloat(),
+                    center.y + radius * kotlin.math.sin(angle).toFloat(),
+                )
+                drawCircle(colors.accent.copy(alpha = 0.25f), headRadius * 2, head)
+                drawCircle(colors.accent, headRadius, head)
             }
         }
         RemoteImage(
@@ -353,96 +444,6 @@ private fun MoonOrb(meditation: Meditation, progress: Float, orbSize: Dp) {
                 .size(orbSize - OrbImageInset)
                 .clip(CircleShape),
         )
-    }
-}
-
-/** Nefes meditasyonunda seçili ritim, titreşim tercihi ve bunları değiştiren işlevler. */
-class BreathingChoice(
-    val selected: BreathingPattern,
-    val onSelect: (BreathingPattern) -> Unit,
-    val haptics: Boolean,
-    val onHapticsChange: (Boolean) -> Unit,
-)
-
-/**
- * Nefes ritmi seçimi; seans süresi seçicisiyle aynı dilde, yalnızca yazıdan oluşur. Telefon titreşebiliyorsa
- * ritimlerin yanında bir de titreşim anahtarı vardır; ritimlerden biri seçilir, titreşim ise açılıp kapanır.
- */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun BreathingPatternPicker(choice: BreathingChoice) {
-    val colors = SerinTheme.colors
-    val canVibrate = rememberCanVibrate()
-    // Büyük yazı ayarında chip'ler alt satıra geçer.
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        BreathingPattern.entries.forEach { pattern ->
-            val isSelected = pattern == choice.selected
-            Text(
-                text = stringResource(pattern.label),
-                style = SerinType.SessionChip.copy(color = if (isSelected) colors.onAccent else colors.textMuted),
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(if (isSelected) colors.accent else Color.Transparent)
-                    .selectable(selected = isSelected, role = Role.RadioButton, onClick = { choice.onSelect(pattern) })
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-            )
-        }
-        if (canVibrate) {
-            Text(
-                text = stringResource(R.string.breath_haptics),
-                style = SerinType.SessionChip.copy(color = if (choice.haptics) colors.onAccent else colors.textMuted),
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(if (choice.haptics) colors.accent else Color.Transparent)
-                    .toggleable(value = choice.haptics, role = Role.Switch, onValueChange = choice.onHapticsChange)
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-            )
-        }
-    }
-}
-
-/** Seans süresi seçimi: ay evreleri; süre uzadıkça ay dolar, en uzunu dolunaydır. */
-@Composable
-private fun SessionLengthPicker(selected: Int, onSelect: (Int) -> Unit) {
-    val colors = SerinTheme.colors
-    val lengths = MeditationSession.LengthsMinutes
-    // Beş seçenek dar telefonlara (320dp) sığsın diye aralık küçük tutulur.
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        lengths.forEachIndexed { index, minutes ->
-            val isSelected = minutes == selected
-            val tint = if (isSelected) colors.accent else colors.textMuted
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .clip(CardShape)
-                    .selectable(selected = isSelected, role = Role.RadioButton, onClick = { onSelect(minutes) })
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
-            ) {
-                MoonPhase(lit = (index + 1f) / lengths.size, color = tint, modifier = Modifier.size(22.dp))
-                Text(
-                    text = stringResource(R.string.session_minutes, minutes),
-                    style = SerinType.SessionChip.copy(color = if (isSelected) colors.text else colors.textMuted),
-                )
-            }
-        }
-    }
-}
-
-/** [lit] 0..1: aydınlık kısmın oranı. Gölge, zemin renginde bir daire olarak kayar. */
-@Composable
-private fun MoonPhase(lit: Float, color: Color, modifier: Modifier = Modifier) {
-    val background = SerinTheme.colors.background
-    Canvas(modifier) {
-        val r = size.minDimension / 2
-        drawCircle(color, r, center)
-        if (lit < 1f) {
-            drawCircle(background, r, Offset(center.x - 2 * r * lit, center.y))
-            drawCircle(color.copy(alpha = 0.35f), r - 0.5.dp.toPx(), center, style = Stroke(1.dp.toPx()))
-        }
     }
 }
 
@@ -457,7 +458,6 @@ private fun MeditationDetailScreenPreview() {
             session = SessionState(lengthMs = 600_000, elapsedMs = 240_000),
             isFavorite = true,
             downloadStatus = AudioStatus.Downloaded,
-            onLengthSelect = {},
             onPlayClick = {},
             onFavoriteToggle = {},
             onDownloadClick = {},

@@ -1,6 +1,7 @@
 package app.azracelik.serin
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -30,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -67,6 +69,13 @@ import app.azracelik.serin.ui.home.HomeScreen
 import app.azracelik.serin.ui.meditation.BreathingChoice
 import app.azracelik.serin.ui.meditation.MeditationDetailScreen
 import app.azracelik.serin.ui.meditation.MeditationScreen
+import app.azracelik.serin.ui.meditation.QuietEffect
+import app.azracelik.serin.ui.meditation.QuietFadeMillis
+import app.azracelik.serin.ui.meditation.QuietMode
+import app.azracelik.serin.ui.meditation.QuietShield
+import app.azracelik.serin.ui.meditation.trackQuietTouches
+import app.azracelik.serin.ui.meditation.rememberQuietAllowed
+import app.azracelik.serin.ui.meditation.SessionSheet
 import app.azracelik.serin.ui.splash.SplashScreen
 import app.azracelik.serin.ui.theme.SerinTheme
 import kotlinx.coroutines.delay
@@ -132,7 +141,30 @@ fun SerinApp(
         backStackEntry?.arguments?.getString("id") == playback.mediaId
     val showMiniPlayer = selectedTab != null && sessionMeditation != null && !onSessionDetail
 
-    BoxWithConstraints(Modifier.fillMaxSize().background(SerinTheme.colors.background)) {
+    // Dinlerken bir süre dokunulmazsa arayüz soluklaşır; dokunuş geri getirir.
+    val quiet = remember { QuietMode() }
+    QuietEffect(quiet, enabled = rememberQuietAllowed() && onSessionDetail && playback.isPlaying)
+    val chrome by animateFloatAsState(if (quiet.isQuiet) 0f else 1f, tween(QuietFadeMillis), label = "chrome")
+
+    // Süre, dinleme sayfasına girmeden önce bu sayfada seçilir; hangi meditasyon için açık olduğu burada tutulur.
+    var sheetMeditationId by rememberSaveable { mutableStateOf<String?>(null) }
+    // Seansı süren meditasyonun süresi seçilmiş olduğundan doğrudan dinleme sayfası açılır; sesi olmayan
+    // meditasyonda da seçilecek bir şey yoktur.
+    val openMeditation = { meditation: Meditation ->
+        val inProgress = playback.mediaId == meditation.id && (playback.isActive || playback.session.elapsedMs > 0)
+        if (inProgress || meditation.audio == null) {
+            navController.navigate(Routes.meditationDetail(meditation))
+        } else {
+            sheetMeditationId = meditation.id
+        }
+    }
+
+    BoxWithConstraints(
+        Modifier
+            .fillMaxSize()
+            .background(SerinTheme.colors.background)
+            .trackQuietTouches(quiet),
+    ) {
         val layoutDirection = LocalLayoutDirection.current
         // Yatayda kesim ve sistem çubukları içeriğin dışında kalır; dikeyde ekranlar kendileri halleder.
         val sideInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout).only(WindowInsetsSides.Horizontal)
@@ -163,12 +195,8 @@ fun SerinApp(
                                     // Seansı süren meditasyonu mini player zaten gösteriyor.
                                     resume = lastId?.takeIf { it != playback.mediaId }?.let(content::meditation),
                                     sessionMinutes = playback.session.lengthMinutes,
-                                    onMeditationClick = { navController.navigate(Routes.meditationDetail(it)) },
-                                    onStartClick = { meditation ->
-                                        val isCurrent = playback.mediaId == meditation.id
-                                        if (!(isCurrent && playback.isActive)) playerViewModel.togglePlayback(meditation)
-                                        navController.navigate(Routes.meditationDetail(meditation))
-                                    },
+                                    onMeditationClick = openMeditation,
+                                    onStartClick = openMeditation,
                                     onPostClick = { navController.navigate(Routes.blogPost(it)) },
                                 )
                             }
@@ -176,7 +204,7 @@ fun SerinApp(
                                 MeditationScreen(
                                     content.meditations,
                                     favorites = favorites,
-                                    onMeditationClick = { navController.navigate(Routes.meditationDetail(it)) },
+                                    onMeditationClick = openMeditation,
                                     onFavoriteToggle = { libraryViewModel.toggleFavorite(it.id) },
                                 )
                             }
@@ -193,10 +221,9 @@ fun SerinApp(
                                             isPlaying = isCurrent && playback.isPlaying,
                                             isBuffering = isCurrent && playback.isBuffering,
                                             // Başka bir meditasyonun seansı sürüyorsa bu ekran baştan gösterilir.
-                                            session = if (isCurrent) playback.session else playback.session.copy(elapsedMs = 0),
+                                            session = if (isCurrent) playback.session else playback.session.copy(elapsedMs = 0, completed = false),
                                             isFavorite = meditation.id in favorites,
                                             downloadStatus = meditation.audio?.let { downloads[AudioStore.key(meditation.id, it)] },
-                                            onLengthSelect = playerViewModel::setSessionLength,
                                             onPlayClick = { playerViewModel.togglePlayback(meditation) },
                                             onFavoriteToggle = { libraryViewModel.toggleFavorite(meditation.id) },
                                             onDownloadClick = { libraryViewModel.toggleDownload(meditation) },
@@ -205,6 +232,8 @@ fun SerinApp(
                                                 breathingHaptics, libraryViewModel::setBreathingHaptics,
                                             )
                                                 .takeIf { meditation.hasBreathingPattern },
+                                            quiet = quiet.isQuiet,
+                                            weekMinutes = remember(history) { HistoryStats.of(history, LocalDate.now()).weekMinutes },
                                         )
                                         playback.problem?.takeIf { isCurrent }?.let {
                                             PlaybackNotice(it, Modifier.align(Alignment.BottomCenter).padding(bottom = contentBottomPadding() + 12.dp))
@@ -236,7 +265,7 @@ fun SerinApp(
                         }
                     }
 
-                    if (showMiniPlayer && sessionMeditation != null) {
+                    if (showMiniPlayer) {
                         MiniPlayer(
                             meditation = sessionMeditation,
                             isPlaying = playback.isActive,
@@ -256,17 +285,37 @@ fun SerinApp(
                         SerinNavigationRail(
                             selected = tab,
                             onSelect = { navController.navigateToTab(it) },
-                            modifier = Modifier.align(Alignment.CenterStart),
+                            modifier = Modifier.align(Alignment.CenterStart).graphicsLayer { alpha = chrome },
                         )
                     } else {
                         SerinBottomBar(
                             selected = tab,
                             onSelect = { navController.navigateToTab(it) },
-                            modifier = Modifier.align(Alignment.BottomCenter),
+                            modifier = Modifier.align(Alignment.BottomCenter).graphicsLayer { alpha = chrome },
                         )
                     }
                 }
             }
+        }
+
+        QuietShield(quiet)
+
+        sheetMeditationId?.let(content::meditation)?.let { meditation ->
+            SessionSheet(
+                meditation = meditation,
+                initialMinutes = playback.session.lengthMinutes,
+                onStart = { minutes ->
+                    sheetMeditationId = null
+                    playerViewModel.setSessionLength(minutes)
+                    playerViewModel.togglePlayback(meditation)
+                    navController.navigate(Routes.meditationDetail(meditation))
+                },
+                onDismiss = { sheetMeditationId = null },
+                breathing = BreathingChoice(
+                    breathingPattern, libraryViewModel::selectBreathingPattern,
+                    breathingHaptics, libraryViewModel::setBreathingHaptics,
+                ).takeIf { meditation.hasBreathingPattern },
+            )
         }
 
         AnimatedVisibility(

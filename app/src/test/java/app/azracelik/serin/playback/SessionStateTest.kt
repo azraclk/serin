@@ -27,4 +27,15 @@ class SessionStateTest {
         assertEquals("0:01", formatDuration(1))
         assertEquals("0:00", formatDuration(0))
     }
+
+    @Test
+    fun remainingMinutesRoundUp() {
+        assertEquals(10, SessionState(lengthMs = 600_000).remainingMinutes)
+        assertEquals(10, SessionState(lengthMs = 600_000, elapsedMs = 1_000).remainingMinutes)
+        assertEquals(9, SessionState(lengthMs = 600_000, elapsedMs = 60_000).remainingMinutes)
+        // Son dakika "1" sayılır; süre dolunca 0.
+        assertEquals(1, SessionState(lengthMs = 600_000, elapsedMs = 599_000).remainingMinutes)
+        assertEquals(0, SessionState(lengthMs = 600_000, elapsedMs = 600_000).remainingMinutes)
+        assertEquals(0, SessionState(lengthMs = 300_000, elapsedMs = 400_000).remainingMinutes)
+    }
 }

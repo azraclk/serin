@@ -34,6 +34,11 @@ Nefesi.</string>
     <string name="play">Oynat</string>
     <string name="pause">Duraklat</string>
     <string name="session_minutes">%d dk</string>
+    <string name="session_done">Tamamlandı</string>
+    <string name="session_done_summary">%1$d dk dinledin · bu hafta %2$d dk</string>
+    <string name="session_prompt">Ne kadar süre?</string>
+    <!-- Ek getirmeden yazılır: "23:40'ta" ya da "21:15'te" saate göre değişir. -->
+    <string name="session_ends_at">Bitiş %s</string>
     <string name="close">Kapat</string>
     <string name="favorite">Favori</string>
     <string name="download">Çevrimdışı dinlemek için indir</string>
