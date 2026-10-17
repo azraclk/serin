@@ -231,8 +231,10 @@ class NavigationTest {
             if (player.state.value.mediaId == null) rule.runOnUiThread { player.togglePlayback(meditation) }
             player.state.value.mediaId != null
         }
-        if (player.state.value.isPlaying) rule.runOnUiThread { player.toggleCurrent() }
-        waitFor("seans duraklatıldı") { !player.state.value.isPlaying }
+        // Ses yüklenirken de çalmak istenmiş sayılır; yalnızca isPlaying'e bakılırsa ses sonradan hazır olup çalmaya
+        // başlar ve seansın "bitti" bayrağını temizler.
+        if (player.state.value.isActive) rule.runOnUiThread { player.toggleCurrent() }
+        waitFor("seans duraklatıldı") { !player.state.value.isActive }
     }
 
     /** Servis testler arasında yaşadığı için açık kalan seans sonraki testin ana sayfasını bozmasın. */
