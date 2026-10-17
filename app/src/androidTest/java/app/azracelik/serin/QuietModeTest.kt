@@ -1,12 +1,17 @@
 package app.azracelik.serin
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.azracelik.serin.data.AudioStatus
 import app.azracelik.serin.data.PreviewContent
@@ -16,6 +21,9 @@ import app.azracelik.serin.ui.components.SerinTab
 import app.azracelik.serin.ui.meditation.MeditationDetailScreen
 import app.azracelik.serin.ui.meditation.QuietEffect
 import app.azracelik.serin.ui.meditation.QuietMode
+import app.azracelik.serin.ui.meditation.QuietShield
+import app.azracelik.serin.ui.meditation.trackQuietTouches
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -85,6 +93,53 @@ class QuietModeTest {
 
         rule.mainClock.advanceTimeBy(20_000)
         assertFalse("Kapalıyken hiç solmamalı", quiet.isQuiet)
+    }
+
+    private var clicks = 0
+
+    /** Uygulamadaki düzenin küçüğü: izleyen kapsayıcı, altında bir düğme, üstünde kalkan. */
+    private fun showButtonUnderShield() {
+        enabled = true
+        rule.setContent {
+            QuietEffect(quiet, enabled)
+            Box(Modifier.fillMaxSize().trackQuietTouches(quiet)) {
+                Button(onClick = { clicks++ }) { Text("düğme") }
+                QuietShield(quiet)
+            }
+        }
+    }
+
+    @Test
+    fun firstTouchWhileQuietOnlyWakesTheUi() {
+        clicks = 0
+        showButtonUnderShield()
+        rule.mainClock.advanceTimeBy(8_200)
+        assertTrue(quiet.isQuiet)
+
+        rule.onNodeWithText("düğme").performClick()
+        rule.mainClock.advanceTimeBy(100)
+
+        assertEquals("Soluk arayüze ilk dokunuş düğmeye gitmemeli", 0, clicks)
+        assertFalse(quiet.isQuiet)
+
+        rule.onNodeWithText("düğme").performClick()
+        assertEquals("Uyandıktan sonra düğme çalışmalı", 1, clicks)
+    }
+
+    @Test
+    fun touchWhileVisibleReachesTheButtonAndRestartsTheCountdown() {
+        clicks = 0
+        showButtonUnderShield()
+        rule.mainClock.advanceTimeBy(5_000)
+
+        rule.onNodeWithText("düğme").performClick()
+        assertEquals(1, clicks)
+
+        // Dokunuş sayacı baştan başlattığı için ilk 8 sn dolmuş olsa da soluk değil.
+        rule.mainClock.advanceTimeBy(5_000)
+        assertFalse(quiet.isQuiet)
+        rule.mainClock.advanceTimeBy(3_200)
+        assertTrue(quiet.isQuiet)
     }
 
     private val session = SessionState(lengthMs = 600_000, elapsedMs = 240_000)

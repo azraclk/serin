@@ -1,11 +1,18 @@
 package app.azracelik.serin.ui.meditation
 
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import android.view.accessibility.AccessibilityManager
 import kotlinx.coroutines.delay
@@ -54,6 +61,27 @@ fun QuietEffect(quiet: QuietMode, enabled: Boolean) {
             delay(QuietIdleMillis)
             quiet.fall()
         }
+    }
+}
+
+/** Dokunuşlar tüketilmeden izlenir; yalnızca sessiz modun bekleme sayacını sıfırlar. */
+fun Modifier.trackQuietTouches(quiet: QuietMode): Modifier = pointerInput(quiet) {
+    awaitPointerEventScope {
+        while (true) {
+            val event = awaitPointerEvent(PointerEventPass.Initial)
+            if (event.type == PointerEventType.Press) quiet.touch()
+        }
+    }
+}
+
+/**
+ * Soluk arayüze yanlışlıkla basılmasın: sessizken ilk dokunuş yalnızca arayüzü geri getirir. İçeriğin
+ * üstüne, [trackQuietTouches] ile izlenen aynı kapsayıcıya konur.
+ */
+@Composable
+fun QuietShield(quiet: QuietMode) {
+    if (quiet.isQuiet) {
+        Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { } })
     }
 }
 

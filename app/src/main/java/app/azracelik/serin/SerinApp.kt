@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
@@ -33,9 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -76,6 +72,8 @@ import app.azracelik.serin.ui.meditation.MeditationScreen
 import app.azracelik.serin.ui.meditation.QuietEffect
 import app.azracelik.serin.ui.meditation.QuietFadeMillis
 import app.azracelik.serin.ui.meditation.QuietMode
+import app.azracelik.serin.ui.meditation.QuietShield
+import app.azracelik.serin.ui.meditation.trackQuietTouches
 import app.azracelik.serin.ui.meditation.rememberQuietAllowed
 import app.azracelik.serin.ui.meditation.SessionSheet
 import app.azracelik.serin.ui.splash.SplashScreen
@@ -165,15 +163,7 @@ fun SerinApp(
         Modifier
             .fillMaxSize()
             .background(SerinTheme.colors.background)
-            // Dokunuşlar tüketilmeden izlenir; yalnızca sessiz modun bekleme sayacını sıfırlar.
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (event.type == PointerEventType.Press) quiet.touch()
-                    }
-                }
-            },
+            .trackQuietTouches(quiet),
     ) {
         val layoutDirection = LocalLayoutDirection.current
         // Yatayda kesim ve sistem çubukları içeriğin dışında kalır; dikeyde ekranlar kendileri halleder.
@@ -308,10 +298,7 @@ fun SerinApp(
             }
         }
 
-        if (quiet.isQuiet) {
-            // Soluk arayüze yanlışlıkla basılmasın: sessizken ilk dokunuş yalnızca arayüzü geri getirir.
-            Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { } })
-        }
+        QuietShield(quiet)
 
         sheetMeditationId?.let(content::meditation)?.let { meditation ->
             SessionSheet(
