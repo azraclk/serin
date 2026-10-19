@@ -86,11 +86,10 @@ import java.time.LocalDate
 
 private const val SplashFadeOutMillis = 300
 
-/** Sekmeler arası geçişin süresi. */
-private const val TabFadeMillis = 250
-
-/** Dinleme sayfası ve blog yazısına inip çıkarken süzülme süresi. */
-private const val DepthMillis = 350
+/** Giden ekran bu sürede söner; yeni ekran, gidenin çoğu sönünce [EnterDelayMillis] sonra yavaşça belirir. */
+private const val ExitMillis = 220
+private const val EnterMillis = 500
+private const val EnterDelayMillis = 180
 
 private object Routes {
     const val HOME = "home"
@@ -106,7 +105,7 @@ private object Routes {
 private fun isDetail(route: String?) = route == Routes.MEDITATION_DETAIL || route == Routes.BLOG_POST
 
 /** Yeni ekranın süzülürken kat ettiği yol: ekran yüksekliğinin küçük bir kesri. */
-private fun depthOffset(fullHeight: Int) = (fullHeight * 0.03f).toInt()
+private fun depthOffset(fullHeight: Int) = (fullHeight * 0.06f).toInt()
 
 private val SerinTab.route
     get() = when (this) {
@@ -201,22 +200,24 @@ fun SerinApp(
                         NavHost(
                             navController,
                             startDestination = Routes.HOME,
-                            // Sekmeler arası geçiş yalnızca kısa bir solmadır; derine inerken (dinleme sayfası,
-                            // blog yazısı) yeni ekran hafifçe yukarı süzülerek belirir, geri dönünce aşağı iner.
+                            // Eski ekran söner, yeni ekran biraz sonra yavaşça belirir; ikisi aynı anda
+                            // değişmez. Derine inerken (dinleme sayfası, blog yazısı) yeni ekran ayrıca yukarı
+                            // süzülür, geri dönünce aşağı iner.
                             enterTransition = {
                                 if (isDetail(targetState.destination.route)) {
-                                    fadeIn(tween(DepthMillis)) + slideInVertically(tween(DepthMillis)) { depthOffset(it) }
+                                    fadeIn(tween(EnterMillis, EnterDelayMillis)) +
+                                        slideInVertically(tween(EnterMillis, EnterDelayMillis)) { depthOffset(it) }
                                 } else {
-                                    fadeIn(tween(TabFadeMillis))
+                                    fadeIn(tween(EnterMillis, EnterDelayMillis))
                                 }
                             },
-                            exitTransition = { fadeOut(tween(TabFadeMillis)) },
-                            popEnterTransition = { fadeIn(tween(TabFadeMillis)) },
+                            exitTransition = { fadeOut(tween(ExitMillis)) },
+                            popEnterTransition = { fadeIn(tween(EnterMillis, EnterDelayMillis)) },
                             popExitTransition = {
                                 if (isDetail(initialState.destination.route)) {
-                                    fadeOut(tween(DepthMillis)) + slideOutVertically(tween(DepthMillis)) { depthOffset(it) }
+                                    fadeOut(tween(ExitMillis)) + slideOutVertically(tween(ExitMillis)) { depthOffset(it) }
                                 } else {
-                                    fadeOut(tween(TabFadeMillis))
+                                    fadeOut(tween(ExitMillis))
                                 }
                             },
                         ) {
