@@ -373,7 +373,6 @@ fun SerinApp(
                 meditation = meditation,
                 initialMinutes = playback.session.lengthMinutes,
                 onStart = { minutes, orbOnScreen ->
-                    sheetMeditationId = null
                     flightTarget = null
                     flight = orbOnScreen?.takeIf { animationsEnabled }?.let { OrbFlight(meditation, it) }
                     playerViewModel.setSessionLength(minutes)

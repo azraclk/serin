@@ -27,6 +27,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -91,8 +92,8 @@ const val SessionStartTag = "sessionStart"
 /**
  * Meditasyona girmeden önce açılan seçim sayfası: süre (ve nefes meditasyonunda ritim) burada seçilir,
  * dinleme sayfası yalnızca dinlemeye kalır. Seçilen süre ve üstteki kürenin ekran koordinatlarındaki yeri
- * [onStart] ile verilir; küre dinleme sayfasındaki yerine uçar. Sayfa kapanana kadar hiçbir şeyi
- * değiştirmez, vazgeçilirse önceki süre korunur.
+ * [onStart] ile verilir; küre dinleme sayfasındaki yerine uçar. Başla'dan sonra sayfa [SheetDissolveMillis]
+ * boyunca erir, küre yerinde kalır, sonra [onDismiss] çağrılır. Vazgeçilirse önceki süre korunur.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,13 +117,24 @@ fun SessionSheet(
             now = System.currentTimeMillis()
         }
     }
+    // Başla'ya basılınca sayfa anında kaybolmaz: küre dinleme sayfasına uçmaya hazırlanırken geri kalanı erir.
+    var leaving by remember { mutableStateOf(false) }
+    val dissolve by animateFloatAsState(if (leaving) 0f else 1f, tween(SheetDissolveMillis), label = "sheetDissolve")
+    LaunchedEffect(leaving) {
+        if (leaving) {
+            delay(SheetDissolveMillis.toLong())
+            onDismiss()
+        }
+    }
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!leaving) onDismiss() },
         modifier = modifier,
         // Kısa ekranda (yatay telefon) içerik kayar; sayfa yarım açık takılıp kalmasın.
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = colors.surface,
+        containerColor = colors.surface.copy(alpha = dissolve),
         contentColor = colors.text,
+        scrimColor = BottomSheetDefaults.ScrimColor.let { it.copy(alpha = it.alpha * dissolve) },
+        dragHandle = { BottomSheetDefaults.DragHandle(Modifier.graphicsLayer { alpha = dissolve }) },
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -140,38 +152,47 @@ fun SessionSheet(
                     .clip(CircleShape),
             )
             Spacer(Modifier.height(16.dp))
-            Text(text = meditation.title, style = SerinType.DetailTitle, textAlign = TextAlign.Center)
-            Spacer(Modifier.height(20.dp))
-            Text(
-                text = stringResource(R.string.session_prompt),
-                style = SerinType.Caption.copy(color = colors.textMuted),
-            )
-            Spacer(Modifier.height(12.dp))
-            SessionLengthPicker(selected = minutes, onSelect = { minutes = it }, moonSize = 28.dp, shade = colors.surface)
-            Spacer(Modifier.height(12.dp))
-            // Seçimin ne anlama geldiğini söyler; telefonun 12/24 saat ayarına uyar.
-            val endsAt = DateFormat.getTimeFormat(LocalContext.current).format(Date(now + minutes * 60_000L))
-            Text(
-                text = stringResource(R.string.session_ends_at, endsAt),
-                style = SerinType.Caption.copy(color = colors.textMuted),
-            )
-            if (breathing != null) {
-                Spacer(Modifier.height(16.dp))
-                BreathingPatternPicker(breathing)
-            }
-            Spacer(Modifier.height(24.dp))
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .widthIn(max = 320.dp)
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp)
-                    .clip(CircleShape)
-                    .background(colors.accent)
-                    .clickable(role = Role.Button, onClick = { onStart(minutes, orbBounds) })
-                    .testTag(SessionStartTag),
+            // Küre kalır, geri kalan her şey Başla'ya basılınca erir.
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.graphicsLayer { alpha = dissolve },
             ) {
-                Text(stringResource(R.string.home_start), style = SerinType.SessionChip.copy(color = colors.onAccent))
+                Text(text = meditation.title, style = SerinType.DetailTitle, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    text = stringResource(R.string.session_prompt),
+                    style = SerinType.Caption.copy(color = colors.textMuted),
+                )
+                Spacer(Modifier.height(12.dp))
+                SessionLengthPicker(selected = minutes, onSelect = { minutes = it }, moonSize = 28.dp, shade = colors.surface)
+                Spacer(Modifier.height(12.dp))
+                // Seçimin ne anlama geldiğini söyler; telefonun 12/24 saat ayarına uyar.
+                val endsAt = DateFormat.getTimeFormat(LocalContext.current).format(Date(now + minutes * 60_000L))
+                Text(
+                    text = stringResource(R.string.session_ends_at, endsAt),
+                    style = SerinType.Caption.copy(color = colors.textMuted),
+                )
+                if (breathing != null) {
+                    Spacer(Modifier.height(16.dp))
+                    BreathingPatternPicker(breathing)
+                }
+                Spacer(Modifier.height(24.dp))
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .widthIn(max = 320.dp)
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .clip(CircleShape)
+                        .background(colors.accent)
+                        .clickable(role = Role.Button, enabled = !leaving, onClick = {
+                            leaving = true
+                            onStart(minutes, orbBounds)
+                        })
+                        .testTag(SessionStartTag),
+                ) {
+                    Text(stringResource(R.string.home_start), style = SerinType.SessionChip.copy(color = colors.onAccent))
+                }
             }
         }
     }

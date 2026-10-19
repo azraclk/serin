@@ -27,13 +27,17 @@ import androidx.compose.ui.unit.toSize
 import app.azracelik.serin.data.Meditation
 import app.azracelik.serin.data.bundledImage
 import app.azracelik.serin.ui.components.RemoteImage
+import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 /** Küre, seçim sayfasından dinleme sayfasındaki yerine bu sürede uçar. */
-private const val FlightMillis = 650
+private const val FlightMillis = 800
 
-/** Sayfa, küre yolun bir kısmını aldıktan sonra belirmeye başlar. */
-const val FlightPageDelayMillis = 250
+/** Seçim sayfası bu sürede erir; küre ancak sayfa gidince, tek başına kalınca uçmaya başlar. */
+const val SheetDissolveMillis = 400
+
+/** Dinleme sayfası, küre yolun bir kısmını aldıktan sonra belirmeye başlar. */
+const val FlightPageDelayMillis = SheetDissolveMillis + 250
 
 /**
  * Seçim sayfasındaki kürenin dinleme sayfasındaki küreye dönüşmesi. Seçim sayfası ayrı bir pencerede
@@ -63,6 +67,7 @@ fun OrbFlightOverlay(
     val destination = target()
     LaunchedEffect(flight, destination != null) {
         if (destination != null) {
+            delay(SheetDissolveMillis.toLong())
             progress.animateTo(1f, tween(FlightMillis, easing = FastOutSlowInEasing))
             onLanded()
         }
