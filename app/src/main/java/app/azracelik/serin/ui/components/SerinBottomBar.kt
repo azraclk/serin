@@ -3,7 +3,9 @@ package app.azracelik.serin.ui.components
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -33,10 +35,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -73,6 +80,11 @@ private val RailSideMargin = 12.dp
 private val RailItemHeight = 56.dp
 /** Seçili sekme, etiketini de gösterdiği için diğerlerinden bu kadar kat geniş yer alır. */
 private const val SelectedWeight = 1.9f
+/** İkonun dolması ve ayın ışığının açılması bu kadar sürer. */
+private const val TabIconFadeMillis = 600
+/** Işık yarıçapı ikon boyunun bu katıdır; en koyu yeri [GlowAlpha] kadar görünür. */
+private const val GlowRadiusFactor = 0.9f
+private const val GlowAlpha = 0.45f
 
 /** Yan menünün kapladığı genişlik (kenar boşluğuyla birlikte); içerik bu kadar içeriden başlar. */
 val RailInset: Dp = RailWidth + RailSideMargin * 2
@@ -124,12 +136,7 @@ fun SerinBottomBar(
                         .selectable(selected = isSelected, role = Role.Tab, onClick = { onSelect(tab) }),
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(tab.icon(isSelected)),
-                            contentDescription = stringResource(tab.label),
-                            colorFilter = ColorFilter.tint(colors.onBar),
-                            modifier = Modifier.size(IconSize),
-                        )
+                        TabIcon(tab, isSelected)
                         AnimatedVisibility(
                             visible = isSelected,
                             enter = fadeIn() + expandHorizontally(),
@@ -147,6 +154,50 @@ fun SerinBottomBar(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Sekme ikonu: seçilince çizgili ikon yavaşça dolu olana geçer. Meditasyon sekmesinin ayı ayrıca
+ * ışıldar; ay dolarken çevresinde yumuşak bir ışık açılır, seçim kalkınca söner.
+ */
+@Composable
+private fun TabIcon(tab: SerinTab, selected: Boolean) {
+    val colors = SerinTheme.colors
+    val glow by animateFloatAsState(
+        targetValue = if (selected && tab == SerinTab.Meditation) 1f else 0f,
+        animationSpec = tween(TabIconFadeMillis),
+        label = "tabGlow",
+    )
+    val label = stringResource(tab.label)
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(IconSize)
+            .drawBehind {
+                if (glow > 0f) {
+                    val radius = size.minDimension * GlowRadiusFactor
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            listOf(colors.onBar.copy(alpha = GlowAlpha * glow), Color.Transparent),
+                            center = center,
+                            radius = radius,
+                        ),
+                        radius = radius,
+                    )
+                }
+            }
+            .semantics { contentDescription = label },
+    ) {
+        // İki ikon üst üste geçerken ekran okuyucu ikisini birden okumasın diye açıklama kutuda durur.
+        Crossfade(targetState = selected, animationSpec = tween(TabIconFadeMillis), label = "tabIcon") { isSelected ->
+            Image(
+                painter = painterResource(tab.icon(isSelected)),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(colors.onBar),
+                modifier = Modifier.size(IconSize),
+            )
         }
     }
 }
@@ -187,12 +238,7 @@ fun SerinNavigationRail(
                     .selectable(selected = isSelected, role = Role.Tab, onClick = { onSelect(tab) })
                     .padding(horizontal = 2.dp, vertical = 8.dp),
             ) {
-                Image(
-                    painter = painterResource(tab.icon(isSelected)),
-                    contentDescription = stringResource(tab.label),
-                    colorFilter = ColorFilter.tint(colors.onBar),
-                    modifier = Modifier.size(IconSize),
-                )
+                TabIcon(tab, isSelected)
                 AnimatedVisibility(
                     visible = isSelected,
                     enter = fadeIn() + expandVertically(),

@@ -5,6 +5,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,7 +41,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -64,6 +67,16 @@ import kotlinx.coroutines.delay
 import java.util.Date
 
 private const val ClockRefreshMillis = 30_000L
+
+/** Seçilen ayın dolması ve halesinin açılması bu kadar sürer. */
+private const val MoonGlowMillis = 700
+
+/** Seçilen ay, kendi evresinden dolunaya giden yolun bu kadarını doldurur. */
+private const val SelectedFill = 0.4f
+
+/** Hale yarıçapı ay çapının bu katıdır; en koyu yeri [GlowAlpha] kadar görünür. */
+private const val GlowRadiusFactor = 0.9f
+private const val GlowAlpha = 0.35f
 
 /** [SessionSheet]'teki Başla düğmesinin sınama etiketi; ana sayfada da "Başla" yazan bir düğme var. */
 const val SessionStartTag = "sessionStart"
@@ -217,31 +230,62 @@ private fun SessionLengthPicker(
                 animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow),
                 label = "moonScale",
             )
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .clip(CardShape)
-                    .selectable(
-                        selected = isSelected,
-                        role = Role.RadioButton,
-                        onClick = {
-                            if (!isSelected) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            onSelect(minutes)
-                        },
-                    )
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
+            // Seçilen ay yavaşça dolar ve çevresinde ışık belirir; seçilmeyenler kendi evresine döner.
+            val phase = (index + 1f) / lengths.size
+            val lit by animateFloatAsState(
+                targetValue = if (isSelected) phase + (1f - phase) * SelectedFill else phase,
+                animationSpec = tween(MoonGlowMillis),
+                label = "moonLit",
+            )
+            val glow by animateFloatAsState(
+                targetValue = if (isSelected) 1f else 0f,
+                animationSpec = tween(MoonGlowMillis),
+                label = "moonGlow",
+            )
+            // Hale, ay kutusunun dışına taşar; kırpılan düğme alanının dışında çizilmesi için bir kutuya sarılır.
+            Box(
+                Modifier.drawBehind {
+                    if (glow > 0f) {
+                        val center = Offset(size.width / 2, 6.dp.toPx() + moonSize.toPx() / 2)
+                        val radius = moonSize.toPx() * GlowRadiusFactor
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                listOf(colors.accent.copy(alpha = GlowAlpha * glow), Color.Transparent),
+                                center = center,
+                                radius = radius,
+                            ),
+                            radius = radius,
+                            center = center,
+                        )
+                    }
+                },
             ) {
-                MoonPhase(
-                    lit = (index + 1f) / lengths.size,
-                    color = tint,
-                    shade = shade,
-                    modifier = Modifier.size(moonSize).graphicsLayer { scaleX = scale; scaleY = scale },
-                )
-                Text(
-                    text = stringResource(R.string.session_minutes, minutes),
-                    style = SerinType.SessionChip.copy(color = if (isSelected) colors.text else colors.textMuted),
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .clip(CardShape)
+                        .selectable(
+                            selected = isSelected,
+                            role = Role.RadioButton,
+                            onClick = {
+                                if (!isSelected) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onSelect(minutes)
+                            },
+                        )
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                ) {
+                    MoonPhase(
+                        lit = lit,
+                        color = tint,
+                        shade = shade,
+                        modifier = Modifier.size(moonSize).graphicsLayer { scaleX = scale; scaleY = scale },
+                    )
+                    Text(
+                        text = stringResource(R.string.session_minutes, minutes),
+                        style = SerinType.SessionChip.copy(color = if (isSelected) colors.text else colors.textMuted),
+                    )
+                }
             }
         }
     }
