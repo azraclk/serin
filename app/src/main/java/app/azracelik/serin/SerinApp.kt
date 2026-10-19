@@ -3,7 +3,10 @@ package app.azracelik.serin
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -83,6 +86,12 @@ import java.time.LocalDate
 
 private const val SplashFadeOutMillis = 300
 
+/** Sekmeler arası geçişin süresi. */
+private const val TabFadeMillis = 250
+
+/** Dinleme sayfası ve blog yazısına inip çıkarken süzülme süresi. */
+private const val DepthMillis = 350
+
 private object Routes {
     const val HOME = "home"
     const val MEDITATION = "meditation"
@@ -93,6 +102,11 @@ private object Routes {
     fun meditationDetail(meditation: Meditation) = "meditation/${meditation.id}"
     fun blogPost(post: BlogPost) = "blog/${post.id}"
 }
+
+private fun isDetail(route: String?) = route == Routes.MEDITATION_DETAIL || route == Routes.BLOG_POST
+
+/** Yeni ekranın süzülürken kat ettiği yol: ekran yüksekliğinin küçük bir kesri. */
+private fun depthOffset(fullHeight: Int) = (fullHeight * 0.03f).toInt()
 
 private val SerinTab.route
     get() = when (this) {
@@ -184,7 +198,28 @@ fun SerinApp(
                 // Menü yanda ise içerik onun sağından başlar.
                 Box(Modifier.fillMaxSize().padding(start = railInset)) {
                     CompositionLocalProvider(LocalMiniPlayerInset provides if (showMiniPlayer) MiniPlayerInset else 0.dp) {
-                        NavHost(navController, startDestination = Routes.HOME) {
+                        NavHost(
+                            navController,
+                            startDestination = Routes.HOME,
+                            // Sekmeler arası geçiş yalnızca kısa bir solmadır; derine inerken (dinleme sayfası,
+                            // blog yazısı) yeni ekran hafifçe yukarı süzülerek belirir, geri dönünce aşağı iner.
+                            enterTransition = {
+                                if (isDetail(targetState.destination.route)) {
+                                    fadeIn(tween(DepthMillis)) + slideInVertically(tween(DepthMillis)) { depthOffset(it) }
+                                } else {
+                                    fadeIn(tween(TabFadeMillis))
+                                }
+                            },
+                            exitTransition = { fadeOut(tween(TabFadeMillis)) },
+                            popEnterTransition = { fadeIn(tween(TabFadeMillis)) },
+                            popExitTransition = {
+                                if (isDetail(initialState.destination.route)) {
+                                    fadeOut(tween(DepthMillis)) + slideOutVertically(tween(DepthMillis)) { depthOffset(it) }
+                                } else {
+                                    fadeOut(tween(TabFadeMillis))
+                                }
+                            },
+                        ) {
                             composable(Routes.HOME) {
                                 val lastId by playerViewModel.lastMeditationId.collectAsStateWithLifecycle()
                                 HomeScreen(
