@@ -36,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -59,14 +61,19 @@ import androidx.compose.ui.unit.dp
 import app.azracelik.serin.R
 import app.azracelik.serin.data.BreathingPattern
 import app.azracelik.serin.data.Meditation
+import app.azracelik.serin.data.bundledImage
 import app.azracelik.serin.playback.MeditationSession
 import app.azracelik.serin.ui.components.CardShape
+import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.theme.SerinTheme
 import app.azracelik.serin.ui.theme.SerinType
 import kotlinx.coroutines.delay
 import java.util.Date
 
 private const val ClockRefreshMillis = 30_000L
+
+/** Üstteki küre; Başla'ya basınca dinleme sayfasındaki küreye dönüşür. */
+private val SheetOrbSize = 72.dp
 
 /** Seçilen ayın dolması ve halesinin açılması bu kadar sürer. */
 private const val MoonGlowMillis = 700
@@ -83,15 +90,16 @@ const val SessionStartTag = "sessionStart"
 
 /**
  * Meditasyona girmeden önce açılan seçim sayfası: süre (ve nefes meditasyonunda ritim) burada seçilir,
- * dinleme sayfası yalnızca dinlemeye kalır. Seçilen süre [onStart] ile verilir; sayfa kapanana kadar
- * hiçbir şeyi değiştirmez, vazgeçilirse önceki süre korunur.
+ * dinleme sayfası yalnızca dinlemeye kalır. Seçilen süre ve üstteki kürenin ekran koordinatlarındaki yeri
+ * [onStart] ile verilir; küre dinleme sayfasındaki yerine uçar. Sayfa kapanana kadar hiçbir şeyi
+ * değiştirmez, vazgeçilirse önceki süre korunur.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionSheet(
     meditation: Meditation,
     initialMinutes: Int,
-    onStart: (minutes: Int) -> Unit,
+    onStart: (minutes: Int, orbOnScreen: Rect?) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     /** Yalnızca nefes meditasyonunda verilir: seçili ritim ve seçici. */
@@ -99,6 +107,7 @@ fun SessionSheet(
 ) {
     val colors = SerinTheme.colors
     var minutes by remember { mutableIntStateOf(initialMinutes) }
+    var orbBounds by remember { mutableStateOf<Rect?>(null) }
     // Sayfa uzun süre açık kalırsa bitiş saati kaymasın diye yarım dakikada bir tazelenir.
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
@@ -122,6 +131,15 @@ fun SessionSheet(
                 .verticalScroll(rememberScrollState())
                 .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
         ) {
+            RemoteImage(
+                url = meditation.image,
+                fallback = bundledImage(meditation.id),
+                modifier = Modifier
+                    .size(SheetOrbSize)
+                    .reportScreenBounds { orbBounds = it }
+                    .clip(CircleShape),
+            )
+            Spacer(Modifier.height(16.dp))
             Text(text = meditation.title, style = SerinType.DetailTitle, textAlign = TextAlign.Center)
             Spacer(Modifier.height(20.dp))
             Text(
@@ -150,7 +168,7 @@ fun SessionSheet(
                     .heightIn(min = 48.dp)
                     .clip(CircleShape)
                     .background(colors.accent)
-                    .clickable(role = Role.Button, onClick = { onStart(minutes) })
+                    .clickable(role = Role.Button, onClick = { onStart(minutes, orbBounds) })
                     .testTag(SessionStartTag),
             ) {
                 Text(stringResource(R.string.home_start), style = SerinType.SessionChip.copy(color = colors.onAccent))
