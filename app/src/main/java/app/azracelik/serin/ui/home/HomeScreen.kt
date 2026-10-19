@@ -71,6 +71,8 @@ import app.azracelik.serin.data.BlogPost
 import app.azracelik.serin.data.HistoryStats
 import app.azracelik.serin.data.Meditation
 import app.azracelik.serin.data.PreviewContent
+import app.azracelik.serin.data.bundledImage
+import app.azracelik.serin.ui.components.RemoteImage
 import app.azracelik.serin.ui.adaptive.LocalWindowSize
 import app.azracelik.serin.ui.adaptive.WidthClass
 import app.azracelik.serin.ui.components.CardBorderWidth
@@ -266,12 +268,16 @@ private fun Browse(
     if (favorites.isNotEmpty()) {
         Spacer(Modifier.height(SectionGap))
         SectionTitle(R.string.home_favorites, sidePadding)
-        MeditationChips(favorites, sidePadding, wrapChips, onMeditationClick)
+        MeditationRow(favorites, sidePadding, wrapChips, spacing = 16.dp) { it, _ ->
+            FavoriteBubble(it, onClick = { onMeditationClick(it) })
+        }
     }
     if (meditations.isNotEmpty()) {
         Spacer(Modifier.height(SectionGap))
         SectionTitle(R.string.home_explore, sidePadding)
-        MeditationChips(meditations, sidePadding, wrapChips, onMeditationClick)
+        MeditationRow(meditations, sidePadding, wrapChips, spacing = 14.dp) { it, index ->
+            MeditationChip(it, index, onClick = { onMeditationClick(it) })
+        }
     }
     if (blogPosts.isNotEmpty()) {
         Spacer(Modifier.height(SectionGap))
@@ -292,33 +298,34 @@ private fun SectionTitle(@StringRes title: Int, sidePadding: Dp) {
 }
 
 /**
- * Meditasyon kartları: dar ekranda yana kayan tek satır, geniş ekranda alt satıra sarılan ızgara.
- * İlk ve son öğenin kenar boşluğu sayfayla aynı.
+ * Meditasyon öğeleri: dar ekranda yana kayan tek satır, geniş ekranda alt satıra sarılan ızgara.
+ * İlk ve son öğenin kenar boşluğu sayfayla aynı. Öğenin görünümünü [item] çizer.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MeditationChips(
+private fun MeditationRow(
     meditations: List<Meditation>,
     sidePadding: Dp,
     wrap: Boolean,
-    onClick: (Meditation) -> Unit,
+    spacing: Dp,
+    item: @Composable (Meditation, Int) -> Unit,
 ) {
     // Gölge kenarlarda kırpılmasın diye dikey boşluk veriliyor.
     val padding = Modifier.padding(horizontal = sidePadding, vertical = 4.dp)
     if (wrap) {
         FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(spacing),
+            verticalArrangement = Arrangement.spacedBy(spacing),
             modifier = padding,
         ) {
-            meditations.forEachIndexed { index, it -> MeditationChip(it, index, onClick = { onClick(it) }) }
+            meditations.forEachIndexed { index, it -> item(it, index) }
         }
     } else {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(spacing),
             modifier = Modifier.horizontalScroll(rememberScrollState()).then(padding),
         ) {
-            meditations.forEachIndexed { index, it -> MeditationChip(it, index, onClick = { onClick(it) }) }
+            meditations.forEachIndexed { index, it -> item(it, index) }
         }
     }
 }
@@ -450,6 +457,48 @@ private fun MeditationChip(meditation: Meditation, index: Int, onClick: () -> Un
         )
     }
 }
+
+/** Favori: vurgu renkli halkanın içinde yuvarlak görsel, altında adı (hikaye halkaları gibi). */
+@Composable
+private fun FavoriteBubble(meditation: Meditation, onClick: () -> Unit) {
+    val colors = SerinTheme.colors
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .width(BubbleSize + 8.dp)
+            .clip(CardShape)
+            .clickable(role = Role.Button, onClick = onClick),
+    ) {
+        Box(
+            Modifier
+                .size(BubbleSize)
+                .serinShadow(CircleShape)
+                .border(BubbleRingWidth, colors.accent, CircleShape)
+                .padding(BubbleRingWidth + BubbleRingGap)
+                .clip(CircleShape)
+                .background(colors.surface),
+        ) {
+            // Küçük yuvarlakta soluk görsel kaybolur; kartlardan daha belirgin tutulur.
+            RemoteImage(
+                url = meditation.image,
+                fallback = bundledImage(meditation.id),
+                alpha = 0.85f,
+                modifier = Modifier.matchParentSize(),
+            )
+            Box(Modifier.matchParentSize().background(colors.overlay))
+        }
+        FitText(
+            text = meditation.label,
+            style = SerinType.Caption.copy(textAlign = TextAlign.Center),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+private val BubbleSize = 80.dp
+private val BubbleRingWidth = 2.5.dp
+private val BubbleRingGap = 3.dp
 
 /** Üst kısım: gün saatine göre selam ve arkasında yavaşça süzülen hilal. */
 @Composable
