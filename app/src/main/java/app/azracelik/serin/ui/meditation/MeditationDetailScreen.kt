@@ -40,6 +40,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.StrokeCap
@@ -99,6 +100,10 @@ fun MeditationDetailScreen(
     quiet: Boolean = false,
     /** Bu hafta dinlenen dakika; seans bitince özet satırında gösterilir. */
     weekMinutes: Int = 0,
+    /** Seçim sayfasından uçan küre varırken gerçek görsel gizli kalır; küre inince açılır. */
+    orbHidden: Boolean = false,
+    /** Kürenin görselinin ekran koordinatlarındaki yerini bildirir; uçan küre oraya iner. */
+    onOrbBounds: (Rect) -> Unit = {},
 ) {
     val windowSize = LocalWindowSize.current
     val colors = SerinTheme.colors
@@ -154,7 +159,7 @@ fun MeditationDetailScreen(
                     haptics = haptics,
                     light = light,
                 ) {
-                    MoonOrb(meditation = meditation, progress = ringProgress, orbSize = orbSize)
+                    MoonOrb(meditation, ringProgress, orbSize, orbHidden, onOrbBounds)
                 }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -212,7 +217,7 @@ fun MeditationDetailScreen(
                         haptics = haptics,
                         light = light,
                     ) {
-                        MoonOrb(meditation = meditation, progress = ringProgress, orbSize = orbSize)
+                        MoonOrb(meditation, ringProgress, orbSize, orbHidden, onOrbBounds)
                     }
                 },
                 controls = {
@@ -274,6 +279,9 @@ private val OrbBreathingRoom = 12.dp
 
 /** Işık, ses seviyesinin bu kadar ilerisini hedefler (süre saniyede bir güncellenir). */
 private const val LightLeadMillis = 1_000L
+
+/** Uçan küre indikten sonra ilerleme halkasının belirme süresi. */
+private const val RingFadeMillis = 400
 
 /** Yükleme halkası, bekleme bu kadar sürerse gösterilir. */
 private const val LoadingRingDelayMillis = 400L
@@ -412,10 +420,18 @@ private fun SessionControls(
  * Halkanın ucunda küçük bir ay noktası durur; ilerleme yalnızca o noktanın yerinden okunur.
  */
 @Composable
-private fun MoonOrb(meditation: Meditation, progress: Float, orbSize: Dp) {
+private fun MoonOrb(
+    meditation: Meditation,
+    progress: Float,
+    orbSize: Dp,
+    hidden: Boolean,
+    onBounds: (Rect) -> Unit,
+) {
     val colors = SerinTheme.colors
+    // Görsel uçan küreden devralınır; halka ise ardından yumuşakça belirir.
+    val ringAlpha by animateFloatAsState(if (hidden) 0f else 1f, tween(RingFadeMillis), label = "ringAlpha")
     Box(contentAlignment = Alignment.Center, modifier = Modifier.size(orbSize)) {
-        Canvas(Modifier.fillMaxSize()) {
+        Canvas(Modifier.fillMaxSize().graphicsLayer { alpha = ringAlpha }) {
             val stroke = 2.dp.toPx()
             val headRadius = 4.dp.toPx()
             // Uçtaki nokta halkanın dışına taşmasın diye halka içeri çekilir.
@@ -442,6 +458,8 @@ private fun MoonOrb(meditation: Meditation, progress: Float, orbSize: Dp) {
             fallback = bundledImage(meditation.id),
             modifier = Modifier
                 .size(orbSize - OrbImageInset)
+                .reportScreenBounds(onBounds)
+                .graphicsLayer { alpha = if (hidden) 0f else 1f }
                 .clip(CircleShape),
         )
     }

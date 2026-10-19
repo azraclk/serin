@@ -34,6 +34,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
@@ -70,13 +71,17 @@ import app.azracelik.serin.ui.components.bottomBarHeight
 import app.azracelik.serin.ui.components.SerinTab
 import app.azracelik.serin.ui.home.HomeScreen
 import app.azracelik.serin.ui.meditation.BreathingChoice
+import app.azracelik.serin.ui.meditation.FlightPageDelayMillis
 import app.azracelik.serin.ui.meditation.MeditationDetailScreen
 import app.azracelik.serin.ui.meditation.MeditationScreen
+import app.azracelik.serin.ui.meditation.OrbFlight
+import app.azracelik.serin.ui.meditation.OrbFlightOverlay
 import app.azracelik.serin.ui.meditation.QuietEffect
 import app.azracelik.serin.ui.meditation.QuietFadeMillis
 import app.azracelik.serin.ui.meditation.QuietMode
 import app.azracelik.serin.ui.meditation.QuietShield
 import app.azracelik.serin.ui.meditation.trackQuietTouches
+import app.azracelik.serin.ui.meditation.rememberAnimationsEnabled
 import app.azracelik.serin.ui.meditation.rememberQuietAllowed
 import app.azracelik.serin.ui.meditation.SessionSheet
 import app.azracelik.serin.ui.splash.SplashScreen
@@ -90,6 +95,9 @@ private const val SplashFadeOutMillis = 300
 private const val ExitMillis = 220
 private const val EnterMillis = 500
 private const val EnterDelayMillis = 180
+
+/** Uçan küre bu sürede inemezse görsel kaldırılır. */
+private const val FlightTimeoutMillis = 3_000L
 
 private object Routes {
     const val HOME = "home"
@@ -159,6 +167,21 @@ fun SerinApp(
     QuietEffect(quiet, enabled = rememberQuietAllowed() && onSessionDetail && playback.isPlaying)
     val chrome by animateFloatAsState(if (quiet.isQuiet) 0f else 1f, tween(QuietFadeMillis), label = "chrome")
 
+    // Seçim sayfasından dinleme sayfasına uçan küre ve inmesi gereken yer (ekran koordinatları).
+    var flight by remember { mutableStateOf<OrbFlight?>(null) }
+    var flightTarget by remember { mutableStateOf<Rect?>(null) }
+    val animationsEnabled = rememberAnimationsEnabled()
+    // Dinleme sayfasından çıkılırsa ya da küre hiç inemezse uçuş bırakılır.
+    LaunchedEffect(route) { if (route != Routes.MEDITATION_DETAIL) flight = null }
+    LaunchedEffect(flight) {
+        if (flight != null) {
+            delay(FlightTimeoutMillis)
+            flight = null
+        } else {
+            flightTarget = null
+        }
+    }
+
     // Süre, dinleme sayfasına girmeden önce bu sayfada seçilir; hangi meditasyon için açık olduğu burada tutulur.
     var sheetMeditationId by rememberSaveable { mutableStateOf<String?>(null) }
     // Seansı süren meditasyonun süresi seçilmiş olduğundan doğrudan dinleme sayfası açılır; sesi olmayan
@@ -204,7 +227,10 @@ fun SerinApp(
                             // değişmez. Derine inerken (dinleme sayfası, blog yazısı) yeni ekran ayrıca yukarı
                             // süzülür, geri dönünce aşağı iner.
                             enterTransition = {
-                                if (isDetail(targetState.destination.route)) {
+                                if (isDetail(targetState.destination.route) && flight != null) {
+                                    // Küre uçarken sayfa yerinde belirir; yukarı süzülmez, yoksa hedef kayar.
+                                    fadeIn(tween(EnterMillis, FlightPageDelayMillis))
+                                } else if (isDetail(targetState.destination.route)) {
                                     fadeIn(tween(EnterMillis, EnterDelayMillis)) +
                                         slideInVertically(tween(EnterMillis, EnterDelayMillis)) { depthOffset(it) }
                                 } else {
@@ -270,6 +296,8 @@ fun SerinApp(
                                                 .takeIf { meditation.hasBreathingPattern },
                                             quiet = quiet.isQuiet,
                                             weekMinutes = remember(history) { HistoryStats.of(history, LocalDate.now()).weekMinutes },
+                                            orbHidden = flight?.meditation?.id == meditation.id,
+                                            onOrbBounds = { if (flight != null) flightTarget = it },
                                         )
                                         playback.problem?.takeIf { isCurrent }?.let {
                                             PlaybackNotice(it, Modifier.align(Alignment.BottomCenter).padding(bottom = contentBottomPadding() + 12.dp))
@@ -336,12 +364,17 @@ fun SerinApp(
 
         QuietShield(quiet)
 
+        flight?.let {
+            OrbFlightOverlay(it, target = { flightTarget }, onLanded = { flight = null })
+        }
+
         sheetMeditationId?.let(content::meditation)?.let { meditation ->
             SessionSheet(
                 meditation = meditation,
                 initialMinutes = playback.session.lengthMinutes,
-                onStart = { minutes ->
-                    sheetMeditationId = null
+                onStart = { minutes, orbOnScreen ->
+                    flightTarget = null
+                    flight = orbOnScreen?.takeIf { animationsEnabled }?.let { OrbFlight(meditation, it) }
                     playerViewModel.setSessionLength(minutes)
                     playerViewModel.togglePlayback(meditation)
                     navController.navigate(Routes.meditationDetail(meditation))
