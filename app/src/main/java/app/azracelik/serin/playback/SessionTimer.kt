@@ -105,6 +105,7 @@ class SessionTimer(
         reportedMinutes = 0
         // Yeni seans sessizden başlar; ses ilk saniyelerde açılır.
         player.volume = 0f
+        MeditationSession.clearExtension()
         MeditationSession.setElapsed(0)
         MeditationSession.setCompleted(false)
     }

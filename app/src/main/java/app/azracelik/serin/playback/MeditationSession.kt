@@ -17,6 +17,8 @@ data class SessionState(
     val remainingMs: Long get() = (lengthMs - elapsedMs).coerceAtLeast(0)
     /** Kalan süre, tam dakika olarak aşağı yuvarlanır: 9:40 kalmışsa 9, son dakikada 0. */
     val remainingMinutes: Int get() = (remainingMs / MinuteMillis).toInt()
+    /** Kalan süre, bildirimde gösterilmek üzere yukarı yuvarlanır: son dakikada da "1 dk kaldı" der. */
+    val remainingMinutesCeil: Int get() = ((remainingMs + MinuteMillis - 1) / MinuteMillis).toInt()
     val progress: Float get() = if (lengthMs > 0) (elapsedMs.toFloat() / lengthMs).coerceIn(0f, 1f) else 0f
 }
 
@@ -32,7 +34,17 @@ object MeditationSession {
     private val _state = MutableStateFlow(SessionState(DefaultLengthMinutes * MinuteMillis))
     val state: StateFlow<SessionState> = _state.asStateFlow()
 
-    fun setLength(minutes: Int) = _state.update { it.copy(lengthMs = minutes * MinuteMillis) }
+    private var baseLengthMs = DefaultLengthMinutes * MinuteMillis
+
+    fun setLength(minutes: Int) {
+        baseLengthMs = minutes * MinuteMillis
+        _state.update { it.copy(lengthMs = baseLengthMs) }
+    }
+
+    /** Seçilen süreyi değiştirmeden bu seansı uzatır; yeni seans başlayınca ya da seans bitince kalkar. */
+    internal fun extend(minutes: Int) = _state.update { it.copy(lengthMs = it.lengthMs + minutes * MinuteMillis) }
+
+    internal fun clearExtension() = _state.update { it.copy(lengthMs = baseLengthMs) }
 
     internal fun setElapsed(elapsedMs: Long) = _state.update { it.copy(elapsedMs = elapsedMs) }
 

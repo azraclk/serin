@@ -34,6 +34,9 @@ Nefesi.</string>
     <string name="play">Oynat</string>
     <string name="pause">Duraklat</string>
     <string name="session_minutes">%d dk</string>
+    <string name="session_remaining">%d dk kaldı</string>
+    <string name="session_extend">+%d dk</string>
+    <string name="session_end">Bitir</string>
     <string name="session_done">Tamamlandı</string>
     <string name="session_done_summary">%1$d dk dinledin · bu hafta %2$d dk</string>
     <string name="session_prompt">Ne kadar süre?</string>

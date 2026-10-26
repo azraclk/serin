@@ -2,6 +2,7 @@ package app.azracelik.serin.playback
 
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -13,14 +14,27 @@ import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionResult
+import app.azracelik.serin.R
 import app.azracelik.serin.data.HistoryStore
+import com.google.common.collect.ImmutableList
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import java.io.File
 
 private const val AudioCacheBytes = 300L * 1024 * 1024
+private const val ExtendMinutes = 5
+private const val ExtendAction = "app.azracelik.serin.EXTEND_SESSION"
+private const val EndAction = "app.azracelik.serin.END_SESSION"
 
 /**
  * Meditasyon seslerini çalar. Ekran kapanınca da çalmaya devam eder; kilit ekranında ve bildirimde
@@ -53,7 +67,60 @@ class PlaybackService : MediaSessionService() {
         sessionTimer = SessionTimer(player, scope) { mediaId, firstMinute ->
             if (mediaId != null) history.addMinute(mediaId, firstMinute)
         }.also { it.start() }
-        mediaSession = MediaSession.Builder(this, player).build()
+        val sessionPlayer = SessionPlayer(player, this)
+        val extend = SessionCommand(ExtendAction, Bundle.EMPTY)
+        val end = SessionCommand(EndAction, Bundle.EMPTY)
+        mediaSession = MediaSession.Builder(this, sessionPlayer)
+            .setCallback(SessionCallback(extend, end))
+            .setMediaButtonPreferences(
+                ImmutableList.of(
+                    CommandButton.Builder(CommandButton.ICON_PLUS)
+                        .setSessionCommand(extend)
+                        .setDisplayName(getString(R.string.session_extend, ExtendMinutes))
+                        .build(),
+                    CommandButton.Builder(CommandButton.ICON_STOP)
+                        .setSessionCommand(end)
+                        .setDisplayName(getString(R.string.session_end))
+                        .build(),
+                ),
+            )
+            .build()
+        // Süre ya da kalan dakika değişince bildirim, oynatıcıda olay olmasa da yenilenir.
+        scope.launch {
+            MeditationSession.state
+                .map { it.lengthMs to it.remainingMinutesCeil }
+                .distinctUntilChanged()
+                .collect { sessionPlayer.invalidate() }
+        }
+    }
+
+    private inner class SessionCallback(
+        private val extend: SessionCommand,
+        private val end: SessionCommand,
+    ) : MediaSession.Callback {
+        override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
+            val commands = MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon().add(extend).add(end).build()
+            return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+                .setAvailableSessionCommands(commands)
+                .build()
+        }
+
+        override fun onCustomCommand(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            customCommand: SessionCommand,
+            args: Bundle,
+        ): ListenableFuture<SessionResult> {
+            when (customCommand.customAction) {
+                ExtendAction -> MeditationSession.extend(ExtendMinutes)
+                EndAction -> session.player.run {
+                    // Mini player ve bildirim kaybolur; uygulamadaki "bitir" ile aynı.
+                    stop()
+                    clearMediaItems()
+                }
+            }
+            return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+        }
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
