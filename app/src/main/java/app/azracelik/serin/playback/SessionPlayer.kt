@@ -1,11 +1,13 @@
 package app.azracelik.serin.playback
 
 import android.content.Context
+import androidx.annotation.OptIn
 import androidx.media3.common.C
 import androidx.media3.common.FlagSet
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import app.azracelik.serin.R
 
 /**
@@ -13,6 +15,7 @@ import app.azracelik.serin.R
  * anlatmaz; burada seçilen seans süresi ve geçen süre bildirilir, böylece ilerleme çubuğu seansla birlikte
  * dolar. Seans içinde atlamanın anlamı olmadığından ileri/geri sarma komutları kapalıdır.
  */
+@OptIn(UnstableApi::class)
 internal class SessionPlayer(player: Player, private val context: Context) : ForwardingPlayer(player) {
     private val seekCommands = intArrayOf(
         Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM,
