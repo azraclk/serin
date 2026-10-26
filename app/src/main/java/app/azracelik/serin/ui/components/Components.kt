@@ -94,17 +94,20 @@ fun serinTextShadow(): TextShadow = with(LocalDensity.current) {
 @Composable
 fun Dp.scaledByFont(): Dp = this * LocalDensity.current.fontScale
 
-/** Tek satırlık kısa etiket; büyük yazı boyutunda sığmazsa kesilmek yerine küçülür. */
+/**
+ * Kısa etiket; büyük yazı boyutunda sığmazsa kesilmek yerine küçülür.
+ * [maxLines] 1'den büyükse sözcükler arasından alt satıra geçebilir; tek bir sözcük yine bölünmez.
+ */
 @Composable
-fun FitText(text: String, style: TextStyle, modifier: Modifier = Modifier) {
+fun FitText(text: String, style: TextStyle, modifier: Modifier = Modifier, maxLines: Int = 1) {
     // En küçük boyut dp cinsinden; sp olsaydı büyük yazı ayarında o da büyür ve metin yine sığmazdı.
     val minFontSize = with(LocalDensity.current) { 8.dp.toSp() }
     BasicText(
         text = text,
         style = style.copy(color = style.color.takeOrElse { LocalContentColor.current }),
-        maxLines = 1,
-        // Kaydırma kapalı: uzun bir kelime alt satıra bölünmez, taşma genişlikten ölçülür.
-        softWrap = false,
+        maxLines = maxLines,
+        // Tek satırda kaydırma kapalı: uzun bir kelime alt satıra bölünmez, taşma genişlikten ölçülür.
+        softWrap = maxLines > 1,
         autoSize = TextAutoSize.StepBased(minFontSize = minFontSize, maxFontSize = style.fontSize, stepSize = 0.5.sp),
         modifier = modifier,
     )

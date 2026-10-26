@@ -53,7 +53,7 @@ class PlaybackService : MediaSessionService() {
         sessionTimer = SessionTimer(player, scope) { mediaId, firstMinute ->
             if (mediaId != null) history.addMinute(mediaId, firstMinute)
         }.also { it.start() }
-        mediaSession = MediaSession.Builder(this, player).build()
+        mediaSession = MediaSession.Builder(this, SessionPlayer(player)).build()
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
