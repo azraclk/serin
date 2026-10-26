@@ -466,9 +466,11 @@ private fun FavoriteBubble(meditation: Meditation, onClick: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier
-            .width(BubbleSize + 8.dp)
+            .width(BubbleSize + 24.dp)
             .clip(CardShape)
-            .clickable(role = Role.Button, onClick = onClick),
+            .clickable(role = Role.Button, onClick = onClick)
+            // Tıklama alanının yuvarlak köşeleri etiketin son harfini kesmesin.
+            .padding(horizontal = 6.dp, vertical = 4.dp),
     ) {
         Box(
             Modifier
@@ -492,6 +494,7 @@ private fun FavoriteBubble(meditation: Meditation, onClick: () -> Unit) {
             text = meditation.label,
             style = SerinType.Caption.copy(textAlign = TextAlign.Center),
             modifier = Modifier.fillMaxWidth(),
+            maxLines = 2,
         )
     }
 }
